@@ -1,11 +1,21 @@
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, AlertTriangle, Package, BarChart3, DollarSign, Users } from 'lucide-react';
+import {
+  ArrowLeft, CheckCircle2, AlertTriangle, XCircle, Package, BarChart3,
+  DollarSign, Users, ShieldCheck, TrendingUp, Brain, Save, Download,
+  ChevronDown, ChevronUp,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Marketplace, MARKETPLACE_CONFIG, getScoreClass } from '@/lib/types';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Marketplace, MARKETPLACE_CONFIG, getScoreClass, ProductDetail } from '@/lib/types';
 import { getProductDetail } from '@/lib/api';
 import { DetailSkeleton } from '@/components/Skeletons';
-import { MockDataBanner } from '@/components/MockDataBanner';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
 
 interface ProductDetailViewProps {
   asin: string;
@@ -14,100 +24,355 @@ interface ProductDetailViewProps {
   onOpenCalculator: (data: { price: number; fbaFee: number; weight: number | null; category: string; feeSource: 'real' | 'estimated' }) => void;
 }
 
+/* ── Panel wrapper with colored header ── */
+function Panel({ title, icon, color, children, defaultOpen = true }: {
+  title: string; icon: React.ReactNode; color: string; children: React.ReactNode; defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen} className="glass-card overflow-hidden flex flex-col">
+      <CollapsibleTrigger className={cn('flex items-center gap-2 px-4 py-3 text-sm font-display font-semibold text-primary-foreground w-full', color)}>
+        {icon}
+        <span className="flex-1 text-left">{title}</span>
+        {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </CollapsibleTrigger>
+      <CollapsibleContent className="p-4 flex-1">{children}</CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+/* ── Stat row helper ── */
+function StatRow({ label, value, accent }: { label: string; value: React.ReactNode; accent?: string }) {
+  return (
+    <div className="flex justify-between items-center py-1 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={cn('font-medium', accent)}>{value}</span>
+    </div>
+  );
+}
+
 export default function ProductDetailView({ asin, marketplace, onBack, onOpenCalculator }: ProductDetailViewProps) {
   const currency = MARKETPLACE_CONFIG[marketplace].currency;
+  const cfg = MARKETPLACE_CONFIG[marketplace];
 
   const { data, isLoading } = useQuery({
     queryKey: ['product-detail', asin, marketplace],
     queryFn: () => getProductDetail(asin, marketplace),
   });
 
-  if (isLoading) return <DetailSkeleton />;
+  // Profitability calculator state
+  const [costPrice, setCostPrice] = useState(8);
+  const [inboundShipping, setInboundShipping] = useState(3);
+  const [calcMarketplace, setCalcMarketplace] = useState<Marketplace>(marketplace);
+  const [fulfillment, setFulfillment] = useState<'FBA' | 'FBM'>('FBA');
 
+  // AI state
+  const [aiResult, setAiResult] = useState<null | {
+    recommendation: string; confidence: number; reasons: string[]; risks: string[]; suggestedPrice: number;
+  }>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  if (isLoading) return <DetailSkeleton />;
   const product = data?.product;
   if (!product) return <div className="text-center py-12 text-muted-foreground">Product not found</div>;
 
-  const stats = [
-    { label: 'Current Price', value: product.currentPrice != null ? `${currency}${product.currentPrice.toFixed(2)}` : '—', icon: <DollarSign className="w-4 h-4" /> },
-    { label: 'BSR', value: product.bsr?.toLocaleString() ?? '—', icon: <BarChart3 className="w-4 h-4" /> },
-    { label: 'Reviews', value: product.reviewCount?.toString() ?? '—', icon: <Users className="w-4 h-4" /> },
-    { label: 'Sellers', value: product.sellerCount?.toString() ?? '—', icon: <Package className="w-4 h-4" /> },
-  ];
+  const calcCfg = MARKETPLACE_CONFIG[calcMarketplace];
+  const sellingPrice = product.currentPrice || 0;
+  const fbaFee = product.realFbaFee || sellingPrice * 0.12 + 1.5;
+  const referralFee = sellingPrice * 0.15;
+  const vat = sellingPrice * calcCfg.vatRate;
+  const totalCosts = costPrice + inboundShipping + (fulfillment === 'FBA' ? fbaFee : 0) + referralFee + vat;
+  const netProfit = sellingPrice - totalCosts;
+  const roi = costPrice > 0 ? (netProfit / costPrice) * 100 : 0;
+  const margin = sellingPrice > 0 ? (netProfit / sellingPrice) * 100 : 0;
+  const breakEvenCost = sellingPrice - (fulfillment === 'FBA' ? fbaFee : 0) - referralFee - vat - inboundShipping;
+  const maxCostFor30ROI = (sellingPrice - (fulfillment === 'FBA' ? fbaFee : 0) - referralFee - vat - inboundShipping) / 1.3;
+
+  const handleAiAnalysis = async () => {
+    setAiLoading(true);
+    // Mock AI analysis
+    await new Promise(r => setTimeout(r, 1500));
+    const isBuy = product.opportunityScore >= 50 && !product.isAmazonSeller && roi > 20;
+    setAiResult({
+      recommendation: isBuy ? 'BUY' : 'NO BUY',
+      confidence: isBuy ? 72 + Math.floor(Math.random() * 20) : 30 + Math.floor(Math.random() * 25),
+      reasons: isBuy
+        ? ['Strong BSR with upward trend', 'Low competition — no Amazon seller', `Healthy ${roi.toFixed(0)}% ROI at current pricing`]
+        : ['Amazon is a direct seller on this listing', 'High competition with established brands', 'Thin margins below 15% threshold'],
+      risks: ['Price volatility in last 30 days', 'Category trending towards saturation', 'Potential seasonal demand drop Q1'],
+      suggestedPrice: Math.round((costPrice * 2.5 + inboundShipping) * 100) / 100,
+    });
+    setAiLoading(false);
+  };
+
+  const handleExportCSV = () => {
+    const rows = [
+      ['Field', 'Value'],
+      ['ASIN', product.asin],
+      ['Title', product.title],
+      ['Price', `${currency}${sellingPrice}`],
+      ['BSR', product.bsr?.toString() || ''],
+      ['Category', product.category],
+      ['FBA Sellers', product.fbaSellers.toString()],
+      ['FBM Sellers', product.fbmSellers.toString()],
+      ['ROI', `${roi.toFixed(1)}%`],
+      ['Net Profit', `${currency}${netProfit.toFixed(2)}`],
+    ];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${product.asin}_analysis.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center gap-3 flex-wrap">
         <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="w-4 h-4" /></Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-display font-bold truncate">{product.title}</h1>
-          <span className="text-sm text-muted-foreground">ASIN: {product.asin} • {product.category}</span>
+          <h1 className="text-lg font-display font-bold truncate">{product.title}</h1>
+          <span className="text-xs text-muted-foreground">ASIN: {product.asin} • {product.category}</span>
         </div>
-        <div className={`score-badge text-base px-4 py-1.5 ${getScoreClass(product.opportunityScore)}`}>
-          Score: {product.opportunityScore}
+        <div className={`score-badge text-sm px-3 py-1 ${getScoreClass(product.opportunityScore)}`}>
+          {product.opportunityScore}/100
         </div>
+        <Button variant="outline" size="sm" onClick={() => {}}><Save className="w-3.5 h-3.5 mr-1" />Save</Button>
+        <Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="w-3.5 h-3.5 mr-1" />CSV</Button>
       </div>
 
-      {data?.isMock && <MockDataBanner />}
+      {/* 5-Panel Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map(s => (
-          <div key={s.label} className="glass-card p-4">
-            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">{s.icon}{s.label}</div>
-            <div className="text-xl font-display font-bold">{s.value}</div>
+        {/* ═══ PANEL 1: CAN YOU SELL IT? ═══ */}
+        <Panel title="Can You Sell It?" icon={<ShieldCheck className="w-4 h-4" />} color="bg-primary">
+          <div className="space-y-2.5">
+            <EligBadge ok={product.eligibility.eligible} label="Eligible to sell" />
+            <EligBadge ok={!product.eligibility.ipRisk} warn={product.eligibility.ipRisk} label={product.eligibility.ipRisk ? 'Possible IP Issue' : 'No IP Issues'} />
+            <EligBadge ok={!product.eligibility.hazmat} bad={product.eligibility.hazmat} label={product.eligibility.hazmat ? 'Hazmat / Dangerous Goods' : 'Not Hazmat'} />
+            <EligBadge ok={!product.eligibility.privateLabel} warn={product.eligibility.privateLabel} label={product.eligibility.privateLabel ? 'Private Label detected' : 'Not Private Label'} />
+            <EligBadge ok={!product.eligibility.restrictions} label="No known restrictions" />
+            <div className="pt-2 border-t border-border">
+              <StatRow label="Variations available" value={product.eligibility.variationCount} />
+            </div>
           </div>
-        ))}
+        </Panel>
+
+        {/* ═══ PANEL 2: DOES IT SELL? ═══ */}
+        <Panel title="Does It Sell?" icon={<TrendingUp className="w-4 h-4" />} color="bg-accent">
+          <div className="space-y-2">
+            <StatRow label="Current BSR" value={`#${product.bsr?.toLocaleString() ?? '—'}`} />
+            <StatRow label="Category" value={product.category} />
+            <div className="border-t border-border pt-2 mt-2">
+              <StatRow label="BSR Avg 30d" value={`#${product.bsrAvg30?.toLocaleString() ?? '—'}`} />
+              <StatRow label="BSR Avg 90d" value={`#${product.bsrAvg90?.toLocaleString() ?? '—'}`} />
+              <StatRow label="BSR Avg 180d" value={`#${product.bsrAvg180?.toLocaleString() ?? '—'}`} />
+            </div>
+            <div className="border-t border-border pt-2 mt-2">
+              <StatRow label="Est. Monthly Sales" value={<span className="font-bold">{product.estimatedMonthlySales} units</span>} />
+              <StatRow label="FBA Sellers" value={product.fbaSellers} />
+              <StatRow label="FBM Sellers" value={product.fbmSellers} />
+              <StatRow
+                label="Amazon Selling?"
+                value={product.isAmazonSeller
+                  ? <span className="text-destructive font-semibold flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" />YES</span>
+                  : <span className="text-success font-semibold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" />No</span>}
+              />
+            </div>
+            {/* Top 3 competitor stock */}
+            <div className="border-t border-border pt-2 mt-2">
+              <p className="text-xs text-muted-foreground mb-1 font-medium">Top 3 Competitor Stock</p>
+              {product.competitors.slice(0, 3).map((c, i) => (
+                <StatRow key={i} label={c.sellerName} value={`${c.stockLevel} units`} />
+              ))}
+            </div>
+          </div>
+          {/* Charts */}
+          <div className="mt-3 space-y-3">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Price & BSR History (90 days)</p>
+              <PriceHistoryChart
+                dates={product.priceHistoryDates || []}
+                prices={product.priceHistory}
+                bsr={product.bsrHistory}
+                currency={currency}
+              />
+            </div>
+          </div>
+        </Panel>
+
+        {/* ═══ PANEL 3: IS IT PROFITABLE? ═══ */}
+        <Panel title="Is It Profitable?" icon={<DollarSign className="w-4 h-4" />} color="bg-warning text-warning-foreground">
+          <div className="grid grid-cols-2 gap-4">
+            {/* Inputs */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Input</p>
+              <div>
+                <Label className="text-xs">Cost Price ({calcCfg.currency})</Label>
+                <Input type="number" step="0.01" value={costPrice} onChange={e => setCostPrice(parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Inbound Shipping ({calcCfg.currency})</Label>
+                <Input type="number" step="0.01" value={inboundShipping} onChange={e => setInboundShipping(parseFloat(e.target.value) || 0)} className="h-8 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Marketplace</Label>
+                <Select value={calcMarketplace} onValueChange={v => setCalcMarketplace(v as Marketplace)}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(MARKETPLACE_CONFIG).map(([k, c]) => (
+                      <SelectItem key={k} value={k}>{k}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-1">
+                {(['FBA', 'FBM'] as const).map(f => (
+                  <button key={f} onClick={() => setFulfillment(f)}
+                    className={cn('flex-1 py-1.5 text-xs font-medium rounded-md transition-colors',
+                      fulfillment === f ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'
+                    )}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Results */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Results</p>
+              <StatRow label="FBA Fee" value={`${calcCfg.currency}${fbaFee.toFixed(2)}`} />
+              <StatRow label="Referral (15%)" value={`${calcCfg.currency}${referralFee.toFixed(2)}`} />
+              <StatRow label={`VAT (${(calcCfg.vatRate * 100).toFixed(0)}%)`} value={`${calcCfg.currency}${vat.toFixed(2)}`} />
+              <div className="border-t border-border pt-2 mt-1">
+                <StatRow label="Net Profit" value={<span className={netProfit > 0 ? 'text-success font-bold' : 'text-destructive font-bold'}>{calcCfg.currency}{netProfit.toFixed(2)}</span>} />
+                <StatRow label="ROI" value={<span className={roi > 0 ? 'text-success font-bold' : 'text-destructive font-bold'}>{roi.toFixed(1)}%</span>} />
+                <StatRow label="Margin" value={<span className={margin > 0 ? 'text-success font-bold' : 'text-destructive font-bold'}>{margin.toFixed(1)}%</span>} />
+              </div>
+              <div className="border-t border-border pt-2 mt-1">
+                <StatRow label="Break-even cost" value={`${calcCfg.currency}${breakEvenCost.toFixed(2)}`} />
+                <StatRow label="Max cost 30% ROI" value={<span className="text-primary font-bold">{calcCfg.currency}{maxCostFor30ROI.toFixed(2)}</span>} />
+              </div>
+            </div>
+          </div>
+        </Panel>
+
+        {/* ═══ PANEL 4: COMPETITION ═══ */}
+        <Panel title="Competition" icon={<Users className="w-4 h-4" />} color="bg-destructive">
+          <div className="space-y-2">
+            <div className="flex gap-3 text-xs mb-2">
+              <Badge variant="secondary">{product.fbaSellers} FBA</Badge>
+              <Badge variant="secondary">{product.fbmSellers} FBM</Badge>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border text-muted-foreground">
+                    <th className="text-left py-1.5 font-medium">Seller</th>
+                    <th className="text-center py-1.5 font-medium">Type</th>
+                    <th className="text-right py-1.5 font-medium">Price</th>
+                    <th className="text-right py-1.5 font-medium">Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {product.competitors.map((c, i) => (
+                    <tr key={i} className={cn('border-b border-border/50', c.isAmazon && 'bg-destructive/10')}>
+                      <td className={cn('py-1.5', c.isAmazon && 'text-destructive font-semibold')}>
+                        {c.sellerName}
+                        {c.isAmazon && <span className="ml-1 text-[10px]">⚠️</span>}
+                      </td>
+                      <td className="text-center">
+                        <Badge variant={c.isFBA ? 'default' : 'outline'} className="text-[10px] px-1.5 py-0">
+                          {c.isFBA ? 'FBA' : 'FBM'}
+                        </Badge>
+                      </td>
+                      <td className="text-right font-medium">{currency}{c.price.toFixed(2)}</td>
+                      <td className="text-right">{c.stockLevel}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {product.isAmazonSeller && (
+              <div className="mt-2 px-2 py-1.5 rounded-md bg-destructive/10 text-destructive text-xs font-medium flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> Amazon is selling on this listing
+              </div>
+            )}
+          </div>
+        </Panel>
+
+        {/* ═══ PANEL 5: AI RECOMMENDATION ═══ */}
+        <Panel title="AI Recommendation" icon={<Brain className="w-4 h-4" />} color="bg-info">
+          {!aiResult ? (
+            <div className="flex flex-col items-center justify-center py-6 gap-3">
+              <Brain className="w-10 h-10 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground text-center">Analyze all product data with AI to get a buy/no-buy recommendation</p>
+              <Button onClick={handleAiAnalysis} disabled={aiLoading} className="gap-2">
+                {aiLoading ? <span className="animate-spin">⏳</span> : <Brain className="w-4 h-4" />}
+                {aiLoading ? 'Analyzing...' : 'Get AI Analysis'}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Verdict */}
+              <div className={cn(
+                'text-center py-3 rounded-lg font-display font-bold text-lg',
+                aiResult.recommendation === 'BUY' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'
+              )}>
+                {aiResult.recommendation === 'BUY' ? '✅' : '❌'} {aiResult.recommendation}
+                <span className="ml-2 text-sm font-normal opacity-75">{aiResult.confidence}% confidence</span>
+              </div>
+
+              {/* Reasons */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Top Reasons</p>
+                {aiResult.reasons.map((r, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs py-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-success mt-0.5 shrink-0" />
+                    <span>{r}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Risks */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Risk Factors</p>
+                {aiResult.risks.map((r, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs py-0.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-warning mt-0.5 shrink-0" />
+                    <span>{r}</span>
+                  </div>
+                ))}
+              </div>
+
+              <StatRow label="Suggested Entry Price" value={<span className="text-primary font-bold">{currency}{aiResult.suggestedPrice}</span>} />
+
+              <Button variant="outline" size="sm" className="w-full" onClick={handleAiAnalysis}>
+                Re-analyze
+              </Button>
+            </div>
+          )}
+        </Panel>
       </div>
+    </div>
+  );
+}
 
-      {/* Flags */}
-      <div className="flex flex-wrap gap-3">
-        {product.isAmazonSeller && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium">
-            <AlertTriangle className="w-3.5 h-3.5" /> Amazon is a seller — High Competition
-          </div>
-        )}
-        {!product.isAmazonSeller && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-success/10 text-success text-xs font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Amazon is not selling
-          </div>
-        )}
-        {product.weight && (
-          <div className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium">
-            Weight: {product.weight} kg
-          </div>
-        )}
-        {product.dimensions && (
-          <div className="px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-medium">
-            {product.dimensions}
-          </div>
-        )}
-      </div>
-
-      {/* Chart */}
-      <div className="glass-card p-4">
-        <h2 className="font-display font-semibold mb-4">Price & BSR History (90 days)</h2>
-        <PriceHistoryChart
-          dates={product.priceHistoryDates || []}
-          prices={product.priceHistory}
-          bsr={product.bsrHistory}
-          currency={currency}
-        />
-      </div>
-
-      {/* Open calculator */}
-      <Button
-        className="w-full"
-        size="lg"
-        onClick={() => onOpenCalculator({
-          price: product.currentPrice || 0,
-          fbaFee: product.realFbaFee || (product.currentPrice ? product.currentPrice * 0.15 : 5),
-          weight: product.weight,
-          category: product.category,
-          feeSource: product.feeSource,
-        })}
-      >
-        Open in Margin Calculator
-      </Button>
+/* ── Eligibility badge ── */
+function EligBadge({ ok, warn, bad, label }: { ok: boolean; warn?: boolean; bad?: boolean; label: string }) {
+  if (bad) return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive text-xs font-medium">
+      <XCircle className="w-3.5 h-3.5" /> {label}
+    </div>
+  );
+  if (warn) return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-warning/10 text-warning text-xs font-medium">
+      <AlertTriangle className="w-3.5 h-3.5" /> {label}
+    </div>
+  );
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-success/10 text-success text-xs font-medium">
+      <CheckCircle2 className="w-3.5 h-3.5" /> {label}
     </div>
   );
 }

@@ -156,6 +156,27 @@ export async function getProductDetail(asin: string, _marketplace: Marketplace):
     return Math.round(baseBsr + trend);
   });
 
+  const fbaSellers = Math.floor(Math.random() * 5) + 2;
+  const fbmSellers = Math.floor(Math.random() * 4) + 1;
+
+  const sellerNames = ['TopDealz EU', 'PrimeGoods GmbH', 'FastShip24', 'MegaStore DE', 'ValuePack Pro', 'EcoSupply', 'SmartBuy Online', 'DirectTrade'];
+  const competitors: import('./types').CompetitorOffer[] = Array.from({ length: fbaSellers + fbmSellers }, (_, i) => ({
+    sellerName: i === 0 && base.isAmazonSeller ? 'Amazon.de' : sellerNames[i % sellerNames.length],
+    isFBA: i < fbaSellers,
+    price: Math.round((basePrice + (Math.random() - 0.5) * 6) * 100) / 100,
+    stockLevel: Math.floor(Math.random() * 50) + 1,
+    isAmazon: i === 0 && base.isAmazonSeller,
+  }));
+
+  const eligibility: import('./types').EligibilityCheck = {
+    eligible: true,
+    ipRisk: Math.random() > 0.8,
+    hazmat: Math.random() > 0.9,
+    privateLabel: Math.random() > 0.75,
+    restrictions: false,
+    variationCount: Math.floor(Math.random() * 8) + 1,
+  };
+
   const detail: ProductDetail = {
     ...base,
     opportunityScore: calculateOpportunityScore(base),
@@ -163,11 +184,19 @@ export async function getProductDetail(asin: string, _marketplace: Marketplace):
     bsrHistoryDates: dates,
     priceHistory: priceHist,
     bsrHistory: bsrHist,
-    sellerCount: Math.floor(Math.random() * 6) + 2,
+    sellerCount: fbaSellers + fbmSellers,
     weight: Math.round((0.2 + Math.random() * 1.3) * 100) / 100,
     dimensions: `${Math.floor(15 + Math.random() * 20)} x ${Math.floor(10 + Math.random() * 15)} x ${Math.floor(5 + Math.random() * 10)} cm`,
     realFbaFee: Math.round((basePrice * 0.12 + 1.5) * 100) / 100,
     feeSource: 'real',
+    bsrAvg30: Math.round(baseBsr * (0.95 + Math.random() * 0.1)),
+    bsrAvg90: Math.round(baseBsr * (0.9 + Math.random() * 0.2)),
+    bsrAvg180: Math.round(baseBsr * (0.85 + Math.random() * 0.3)),
+    estimatedMonthlySales: Math.round(300 + Math.random() * 2000),
+    fbaSellers,
+    fbmSellers,
+    competitors,
+    eligibility,
   };
 
   return { product: detail, isMock: false };
