@@ -13,6 +13,23 @@ export interface KeepaProduct {
   opportunityScore: number;
 }
 
+export interface CompetitorOffer {
+  sellerName: string;
+  isFBA: boolean;
+  price: number;
+  stockLevel: number;
+  isAmazon: boolean;
+}
+
+export interface EligibilityCheck {
+  eligible: boolean;
+  ipRisk: boolean;
+  hazmat: boolean;
+  privateLabel: boolean;
+  restrictions: boolean;
+  variationCount: number;
+}
+
 export interface ProductDetail extends KeepaProduct {
   priceHistoryDates: string[];
   bsrHistoryDates: string[];
@@ -21,6 +38,14 @@ export interface ProductDetail extends KeepaProduct {
   dimensions: string | null;
   realFbaFee: number | null;
   feeSource: 'real' | 'estimated';
+  bsrAvg30: number | null;
+  bsrAvg90: number | null;
+  bsrAvg180: number | null;
+  estimatedMonthlySales: number;
+  fbaSellers: number;
+  fbmSellers: number;
+  competitors: CompetitorOffer[];
+  eligibility: EligibilityCheck;
 }
 
 export interface MarginCalculation {
