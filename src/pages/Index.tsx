@@ -1,16 +1,56 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import AppLayout from '@/components/AppLayout';
+import ProductFinder from '@/components/ProductFinder';
+import ProductDetailView from '@/components/ProductDetailView';
+import MarginCalculator from '@/components/MarginCalculator';
+import { Marketplace } from '@/lib/types';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+type View = 'finder' | 'calculator' | 'detail';
+
+const Index = () => {
+  const [activeTab, setActiveTab] = useState<'finder' | 'calculator'>('finder');
+  const [view, setView] = useState<View>('finder');
+  const [selectedAsin, setSelectedAsin] = useState('');
+  const [selectedMarketplace, setSelectedMarketplace] = useState<Marketplace>('DE');
+  const [calculatorPrefill, setCalculatorPrefill] = useState<{
+    price: number; fbaFee: number; weight: number | null; category: string; feeSource: 'real' | 'estimated';
+  } | undefined>();
+
+  const handleTabChange = (tab: 'finder' | 'calculator') => {
+    setActiveTab(tab);
+    setView(tab);
+  };
+
+  const handleAnalyze = (asin: string, marketplace: Marketplace) => {
+    setSelectedAsin(asin);
+    setSelectedMarketplace(marketplace);
+    setView('detail');
+  };
+
+  const handleOpenCalculator = (data: typeof calculatorPrefill) => {
+    setCalculatorPrefill(data);
+    setActiveTab('calculator');
+    setView('calculator');
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <AppLayout activeTab={activeTab} onTabChange={handleTabChange}>
+      {view === 'finder' && (
+        <ProductFinder onAnalyze={handleAnalyze} />
+      )}
+      {view === 'detail' && (
+        <ProductDetailView
+          asin={selectedAsin}
+          marketplace={selectedMarketplace}
+          onBack={() => setView('finder')}
+          onOpenCalculator={handleOpenCalculator}
+        />
+      )}
+      {view === 'calculator' && (
+        <MarginCalculator prefill={calculatorPrefill} />
+      )}
+    </AppLayout>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
