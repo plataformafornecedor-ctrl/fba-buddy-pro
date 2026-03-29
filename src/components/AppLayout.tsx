@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Search, Radar, TrendingUp, Calculator, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Search, Calculator, Truck, Radar, Menu, X, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Tab = 'finder' | 'calculator';
+type Tab = 'dashboard' | 'finder' | 'calculator' | 'suppliers';
 
 interface AppLayoutProps {
   activeTab: Tab;
@@ -11,8 +11,10 @@ interface AppLayoutProps {
 }
 
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   { id: 'finder', label: 'Product Finder', icon: <Search className="w-4 h-4" /> },
-  { id: 'calculator', label: 'Margin Calculator', icon: <Calculator className="w-4 h-4" /> },
+  { id: 'calculator', label: 'Calculator', icon: <Calculator className="w-4 h-4" /> },
+  { id: 'suppliers', label: 'Suppliers', icon: <Truck className="w-4 h-4" /> },
 ];
 
 export default function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) {
@@ -20,7 +22,6 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top bar */}
       <header className="h-14 bg-card border-b border-border flex items-center px-4 gap-4 sticky top-0 z-50">
         <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -52,7 +53,6 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
         </div>
       </header>
 
-      {/* Mobile nav */}
       {mobileOpen && (
         <div className="md:hidden bg-card border-b border-border p-2 flex flex-col gap-1">
           {NAV_ITEMS.map(item => (

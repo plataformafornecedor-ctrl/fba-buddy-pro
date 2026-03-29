@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
+import Dashboard from '@/pages/Dashboard';
 import ProductFinder from '@/components/ProductFinder';
 import ProductDetailView from '@/components/ProductDetailView';
 import MarginCalculator from '@/components/MarginCalculator';
+import Suppliers from '@/pages/Suppliers';
 import { Marketplace } from '@/lib/types';
 
-type View = 'finder' | 'calculator' | 'detail';
+type View = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'detail';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'finder' | 'calculator'>('finder');
-  const [view, setView] = useState<View>('finder');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'finder' | 'calculator' | 'suppliers'>('dashboard');
+  const [view, setView] = useState<View>('dashboard');
   const [selectedAsin, setSelectedAsin] = useState('');
   const [selectedMarketplace, setSelectedMarketplace] = useState<Marketplace>('DE');
   const [calculatorPrefill, setCalculatorPrefill] = useState<{
     price: number; fbaFee: number; weight: number | null; category: string; feeSource: 'real' | 'estimated';
   } | undefined>();
 
-  const handleTabChange = (tab: 'finder' | 'calculator') => {
+  const handleTabChange = (tab: 'dashboard' | 'finder' | 'calculator' | 'suppliers') => {
     setActiveTab(tab);
     setView(tab);
   };
@@ -35,20 +37,18 @@ const Index = () => {
 
   return (
     <AppLayout activeTab={activeTab} onTabChange={handleTabChange}>
-      {view === 'finder' && (
-        <ProductFinder onAnalyze={handleAnalyze} />
-      )}
+      {view === 'dashboard' && <Dashboard onNavigate={handleTabChange} />}
+      {view === 'finder' && <ProductFinder onAnalyze={handleAnalyze} />}
       {view === 'detail' && (
         <ProductDetailView
           asin={selectedAsin}
           marketplace={selectedMarketplace}
-          onBack={() => setView('finder')}
+          onBack={() => { setView('finder'); setActiveTab('finder'); }}
           onOpenCalculator={handleOpenCalculator}
         />
       )}
-      {view === 'calculator' && (
-        <MarginCalculator prefill={calculatorPrefill} />
-      )}
+      {view === 'calculator' && <MarginCalculator prefill={calculatorPrefill} />}
+      {view === 'suppliers' && <Suppliers />}
     </AppLayout>
   );
 };
