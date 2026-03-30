@@ -1,0 +1,496 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+export type Language = 'en' | 'pt' | 'es';
+
+const translations = {
+  en: {
+    // Nav
+    'nav.dashboard': 'Dashboard',
+    'nav.finder': 'Product Finder',
+    'nav.calculator': 'Calculator',
+    'nav.suppliers': 'Suppliers',
+    'nav.liveData': 'Live Market Data',
+
+    // Product Finder
+    'finder.title': 'Product Finder',
+    'finder.subtitle': 'Search Amazon products and discover opportunities',
+    'finder.placeholder': 'Search keywords (e.g. silicone kitchen utensils)',
+    'finder.search': 'Search',
+    'finder.fetching': 'Fetching...',
+    'finder.productsFound': 'products found',
+    'finder.noResults': 'No products found. Try a different keyword.',
+    'finder.emptyState': 'Enter a keyword to search for Amazon FBA product opportunities',
+    'finder.analyze': 'Analyze',
+
+    // Product Row
+    'product.price': 'Price',
+    'product.bsr': 'BSR',
+    'product.reviews': 'Reviews',
+    'product.score': 'Score',
+
+    // Dashboard
+    'dashboard.title': 'Dashboard',
+    'dashboard.subtitle': 'Your FBA research overview',
+    'dashboard.productsAnalyzed': 'Products Analyzed',
+    'dashboard.avgMargin': 'Avg Margin %',
+    'dashboard.activeAlerts': 'Active Alerts',
+    'dashboard.savedProducts': 'Saved Products',
+    'dashboard.recentSearches': 'Recent Searches',
+    'dashboard.quickActions': 'Quick Actions',
+    'dashboard.searchProduct': 'Search Product',
+    'dashboard.openCalculator': 'Open Calculator',
+    'dashboard.viewSuppliers': 'View Suppliers',
+    'dashboard.aiInsight': 'AI Insight',
+    'dashboard.aiTip': "Today's tip: Products with BSR under 20,000 and under 150 reviews represent the best opportunities for new FBA sellers entering the European market.",
+    'dashboard.results': 'results',
+    'dashboard.thisWeek': '+12 this week',
+    'dashboard.vsLastWeek': '+2.1% vs last week',
+    'dashboard.newToday': '2 new today',
+    'dashboard.addedRecently': '3 added recently',
+
+    // Calculator
+    'calc.title': 'Margin Calculator',
+    'calc.subtitle': 'Calculate your FBA profit margins with real data',
+    'calc.inputData': 'Input Data',
+    'calc.marketplace': 'Marketplace',
+    'calc.sellingPrice': 'Selling Price',
+    'calc.purchasePrice': 'Purchase price',
+    'calc.shippingCost': 'Shipping cost',
+    'calc.fbaFee': 'FBA Fee',
+    'calc.realData': 'Real Amazon data',
+    'calc.estimated': 'Estimated',
+    'calc.costBreakdown': 'Cost Breakdown',
+    'calc.referralFee': 'Referral Fee (15%)',
+    'calc.totalCosts': 'Total Costs',
+    'calc.profitAnalysis': 'Profit Analysis',
+    'calc.profit': 'Profit',
+    'calc.margin': 'Margin',
+    'calc.roi': 'ROI',
+    'calc.netProfit': 'Net profit',
+    'calc.breakEven': 'Break-even',
+    'calc.compareAll': 'Compare all marketplaces',
+
+    // Suppliers
+    'suppliers.title': 'Suppliers',
+    'suppliers.subtitle': 'Verified suppliers for FBA sourcing',
+    'suppliers.search': 'Search supplier...',
+    'suppliers.contact': 'Contact Supplier',
+    'suppliers.requestSample': 'Request Sample',
+    'suppliers.european': 'European Suppliers',
+
+    // Product Detail - Panel 1
+    'panel.canYouSell': 'Can You Sell It?',
+    'panel.eligible': 'Eligible to sell',
+    'panel.noIpIssues': 'No IP Issues',
+    'panel.ipRisk': 'Possible IP Issue',
+    'panel.notHazmat': 'Not Hazmat',
+    'panel.hazmat': 'Hazmat / Dangerous Goods',
+    'panel.notPrivateLabel': 'Not Private Label',
+    'panel.privateLabel': 'Private Label detected',
+    'panel.noRestrictions': 'No known restrictions',
+    'panel.variations': 'Variations available',
+
+    // Panel 2
+    'panel.doesItSell': 'Does It Sell?',
+    'panel.currentBsr': 'Current BSR',
+    'panel.category': 'Category',
+    'panel.bsrAvg30': 'BSR Avg 30d',
+    'panel.bsrAvg90': 'BSR Avg 90d',
+    'panel.bsrAvg180': 'BSR Avg 180d',
+    'panel.estMonthlySales': 'Est. Monthly Sales',
+    'panel.units': 'units',
+    'panel.fbaSellers': 'FBA Sellers',
+    'panel.fbmSellers': 'FBM Sellers',
+    'panel.amazonSelling': 'Amazon Selling?',
+    'panel.yes': 'YES',
+    'panel.no': 'No',
+    'panel.top3Stock': 'Top 3 Competitor Stock',
+    'panel.priceHistory': 'Price & BSR History (90 days)',
+
+    // Panel 3
+    'panel.isItProfitable': 'Is It Profitable?',
+    'panel.input': 'Input',
+    'panel.results': 'Results',
+    'panel.costPrice': 'Cost Price',
+    'panel.inboundShipping': 'Inbound Shipping',
+    'panel.referral15': 'Referral (15%)',
+    'panel.breakEvenCost': 'Break-even cost',
+    'panel.maxCost30ROI': 'Max cost 30% ROI',
+
+    // Panel 4
+    'panel.competition': 'Competition',
+    'panel.seller': 'Seller',
+    'panel.type': 'Type',
+    'panel.stock': 'Stock',
+    'panel.amazonSelling.warning': 'Amazon is selling on this listing',
+
+    // Panel 5
+    'panel.aiRecommendation': 'AI Recommendation',
+    'panel.aiDescription': 'Analyze all product data with AI to get a buy/no-buy recommendation',
+    'panel.getAiAnalysis': 'Get AI Analysis',
+    'panel.analyzing': 'Analyzing...',
+    'panel.reAnalyze': 'Re-analyze',
+    'panel.buy': 'BUY',
+    'panel.noBuy': 'NO BUY',
+    'panel.confidence': 'confidence',
+    'panel.topReasons': 'Top Reasons',
+    'panel.riskFactors': 'Risk Factors',
+    'panel.suggestedPrice': 'Suggested Entry Price',
+
+    // Header buttons
+    'btn.save': 'Save',
+    'btn.csv': 'CSV',
+    'btn.saveProduct': 'Save Product',
+    'btn.exportCsv': 'Export to CSV',
+    'btn.cancel': 'Cancel',
+
+    // General
+    'general.loading': 'Loading...',
+    'general.noResults': 'No results found',
+    'general.productNotFound': 'Product not found',
+
+    // Mock banner
+    'mock.banner': 'Live data temporarily unavailable — showing sample data',
+
+    // Marketplace labels
+    'marketplace.DE': 'Germany',
+    'marketplace.FR': 'France',
+    'marketplace.IT': 'Italy',
+    'marketplace.ES': 'Spain',
+    'marketplace.UK': 'United Kingdom',
+  },
+  pt: {
+    'nav.dashboard': 'Painel',
+    'nav.finder': 'Pesquisa de Produtos',
+    'nav.calculator': 'Calculadora de Margem',
+    'nav.suppliers': 'Fornecedores',
+    'nav.liveData': 'Dados de Mercado em Tempo Real',
+
+    'finder.title': 'Pesquisa de Produtos',
+    'finder.subtitle': 'Pesquise produtos Amazon e descubra oportunidades',
+    'finder.placeholder': 'Pesquisar palavras-chave (ex: utensílios de cozinha silicone)',
+    'finder.search': 'Pesquisar',
+    'finder.fetching': 'A buscar...',
+    'finder.productsFound': 'produtos encontrados',
+    'finder.noResults': 'Nenhum resultado encontrado. Tente outra palavra-chave.',
+    'finder.emptyState': 'Insira uma palavra-chave para pesquisar oportunidades de produtos Amazon FBA',
+    'finder.analyze': 'Analisar',
+
+    'product.price': 'Preço',
+    'product.bsr': 'BSR',
+    'product.reviews': 'Avaliações',
+    'product.score': 'Score',
+
+    'dashboard.title': 'Painel',
+    'dashboard.subtitle': 'Visão geral da sua pesquisa FBA',
+    'dashboard.productsAnalyzed': 'Produtos Analisados',
+    'dashboard.avgMargin': 'Margem Média %',
+    'dashboard.activeAlerts': 'Alertas Ativos',
+    'dashboard.savedProducts': 'Produtos Guardados',
+    'dashboard.recentSearches': 'Pesquisas Recentes',
+    'dashboard.quickActions': 'Ações Rápidas',
+    'dashboard.searchProduct': 'Pesquisar Produto',
+    'dashboard.openCalculator': 'Abrir Calculadora',
+    'dashboard.viewSuppliers': 'Ver Fornecedores',
+    'dashboard.aiInsight': 'Insight IA',
+    'dashboard.aiTip': 'Dica de hoje: Produtos com BSR abaixo de 20.000 e menos de 150 avaliações representam as melhores oportunidades para novos vendedores FBA no mercado europeu.',
+    'dashboard.results': 'resultados',
+    'dashboard.thisWeek': '+12 esta semana',
+    'dashboard.vsLastWeek': '+2.1% vs semana passada',
+    'dashboard.newToday': '2 novos hoje',
+    'dashboard.addedRecently': '3 adicionados recentemente',
+
+    'calc.title': 'Calculadora de Margem',
+    'calc.subtitle': 'Calcule as suas margens de lucro FBA com dados reais',
+    'calc.inputData': 'Dados de Entrada',
+    'calc.marketplace': 'Mercado',
+    'calc.sellingPrice': 'Preço de venda',
+    'calc.purchasePrice': 'Preço de compra',
+    'calc.shippingCost': 'Custo de envio',
+    'calc.fbaFee': 'Taxa FBA',
+    'calc.realData': 'Dados reais Amazon',
+    'calc.estimated': 'Estimado',
+    'calc.costBreakdown': 'Decomposição de Custos',
+    'calc.referralFee': 'Taxa de referência (15%)',
+    'calc.totalCosts': 'Custos Totais',
+    'calc.profitAnalysis': 'Análise de Lucro',
+    'calc.profit': 'Lucro',
+    'calc.margin': 'Margem',
+    'calc.roi': 'ROI',
+    'calc.netProfit': 'Lucro líquido',
+    'calc.breakEven': 'Ponto de equilíbrio',
+    'calc.compareAll': 'Comparar todos os mercados',
+
+    'suppliers.title': 'Fornecedores',
+    'suppliers.subtitle': 'Fornecedores verificados para sourcing FBA',
+    'suppliers.search': 'Pesquisar fornecedor...',
+    'suppliers.contact': 'Contactar Fornecedor',
+    'suppliers.requestSample': 'Pedir Amostra',
+    'suppliers.european': 'Fornecedores Europeus',
+
+    'panel.canYouSell': 'Podes Vender?',
+    'panel.eligible': 'Elegível para venda',
+    'panel.noIpIssues': 'Sem Problemas de PI',
+    'panel.ipRisk': 'Possível Problema de PI',
+    'panel.notHazmat': 'Não é Hazmat',
+    'panel.hazmat': 'Hazmat / Mercadorias Perigosas',
+    'panel.notPrivateLabel': 'Não é Marca Própria',
+    'panel.privateLabel': 'Marca Própria detetada',
+    'panel.noRestrictions': 'Sem restrições conhecidas',
+    'panel.variations': 'Variações disponíveis',
+
+    'panel.doesItSell': 'Tem Vendas?',
+    'panel.currentBsr': 'BSR Atual',
+    'panel.category': 'Categoria',
+    'panel.bsrAvg30': 'BSR Média 30d',
+    'panel.bsrAvg90': 'BSR Média 90d',
+    'panel.bsrAvg180': 'BSR Média 180d',
+    'panel.estMonthlySales': 'Vendas Mensais Est.',
+    'panel.units': 'unidades',
+    'panel.fbaSellers': 'Vendedores FBA',
+    'panel.fbmSellers': 'Vendedores FBM',
+    'panel.amazonSelling': 'Amazon a Vender?',
+    'panel.yes': 'SIM',
+    'panel.no': 'Não',
+    'panel.top3Stock': 'Stock Top 3 Concorrentes',
+    'panel.priceHistory': 'Histórico de Preço e BSR (90 dias)',
+
+    'panel.isItProfitable': 'É Lucrativo?',
+    'panel.input': 'Entrada',
+    'panel.results': 'Resultados',
+    'panel.costPrice': 'Preço de Custo',
+    'panel.inboundShipping': 'Envio de Entrada',
+    'panel.referral15': 'Referência (15%)',
+    'panel.breakEvenCost': 'Custo de equilíbrio',
+    'panel.maxCost30ROI': 'Custo máx. ROI 30%',
+
+    'panel.competition': 'Concorrência',
+    'panel.seller': 'Vendedor',
+    'panel.type': 'Tipo',
+    'panel.stock': 'Stock',
+    'panel.amazonSelling.warning': 'Amazon está a vender neste listing',
+
+    'panel.aiRecommendation': 'Recomendação IA',
+    'panel.aiDescription': 'Analise todos os dados do produto com IA para obter uma recomendação de compra',
+    'panel.getAiAnalysis': 'Obter Análise IA',
+    'panel.analyzing': 'A analisar...',
+    'panel.reAnalyze': 'Re-analisar',
+    'panel.buy': 'COMPRAR',
+    'panel.noBuy': 'NÃO COMPRAR',
+    'panel.confidence': 'confiança',
+    'panel.topReasons': 'Principais Razões',
+    'panel.riskFactors': 'Fatores de Risco',
+    'panel.suggestedPrice': 'Preço de Entrada Sugerido',
+
+    'btn.save': 'Guardar',
+    'btn.csv': 'CSV',
+    'btn.saveProduct': 'Guardar Produto',
+    'btn.exportCsv': 'Exportar para CSV',
+    'btn.cancel': 'Cancelar',
+
+    'general.loading': 'A carregar...',
+    'general.noResults': 'Nenhum resultado encontrado',
+    'general.productNotFound': 'Produto não encontrado',
+
+    'mock.banner': 'Dados em tempo real temporariamente indisponíveis — a mostrar dados de exemplo',
+
+    'marketplace.DE': 'Alemanha',
+    'marketplace.FR': 'França',
+    'marketplace.IT': 'Itália',
+    'marketplace.ES': 'Espanha',
+    'marketplace.UK': 'Reino Unido',
+  },
+  es: {
+    'nav.dashboard': 'Panel',
+    'nav.finder': 'Búsqueda de Productos',
+    'nav.calculator': 'Calculadora de Margen',
+    'nav.suppliers': 'Proveedores',
+    'nav.liveData': 'Datos de Mercado en Tiempo Real',
+
+    'finder.title': 'Búsqueda de Productos',
+    'finder.subtitle': 'Busca productos Amazon y descubre oportunidades',
+    'finder.placeholder': 'Buscar palabras clave (ej: utensilios de cocina silicona)',
+    'finder.search': 'Buscar',
+    'finder.fetching': 'Buscando...',
+    'finder.productsFound': 'productos encontrados',
+    'finder.noResults': 'No se encontraron resultados. Prueba otra palabra clave.',
+    'finder.emptyState': 'Introduce una palabra clave para buscar oportunidades de productos Amazon FBA',
+    'finder.analyze': 'Analizar',
+
+    'product.price': 'Precio',
+    'product.bsr': 'BSR',
+    'product.reviews': 'Reseñas',
+    'product.score': 'Puntuación',
+
+    'dashboard.title': 'Panel',
+    'dashboard.subtitle': 'Tu resumen de investigación FBA',
+    'dashboard.productsAnalyzed': 'Productos Analizados',
+    'dashboard.avgMargin': 'Margen Medio %',
+    'dashboard.activeAlerts': 'Alertas Activas',
+    'dashboard.savedProducts': 'Productos Guardados',
+    'dashboard.recentSearches': 'Búsquedas Recientes',
+    'dashboard.quickActions': 'Acciones Rápidas',
+    'dashboard.searchProduct': 'Buscar Producto',
+    'dashboard.openCalculator': 'Abrir Calculadora',
+    'dashboard.viewSuppliers': 'Ver Proveedores',
+    'dashboard.aiInsight': 'Insight IA',
+    'dashboard.aiTip': 'Consejo de hoy: Los productos con BSR inferior a 20.000 y menos de 150 reseñas representan las mejores oportunidades para nuevos vendedores FBA en el mercado europeo.',
+    'dashboard.results': 'resultados',
+    'dashboard.thisWeek': '+12 esta semana',
+    'dashboard.vsLastWeek': '+2.1% vs semana pasada',
+    'dashboard.newToday': '2 nuevos hoy',
+    'dashboard.addedRecently': '3 añadidos recientemente',
+
+    'calc.title': 'Calculadora de Margen',
+    'calc.subtitle': 'Calcula tus márgenes de beneficio FBA con datos reales',
+    'calc.inputData': 'Datos de Entrada',
+    'calc.marketplace': 'Mercado',
+    'calc.sellingPrice': 'Precio de venta',
+    'calc.purchasePrice': 'Precio de compra',
+    'calc.shippingCost': 'Coste de envío',
+    'calc.fbaFee': 'Tarifa FBA',
+    'calc.realData': 'Datos reales Amazon',
+    'calc.estimated': 'Estimado',
+    'calc.costBreakdown': 'Desglose de Costes',
+    'calc.referralFee': 'Tarifa de referencia (15%)',
+    'calc.totalCosts': 'Costes Totales',
+    'calc.profitAnalysis': 'Análisis de Beneficio',
+    'calc.profit': 'Beneficio',
+    'calc.margin': 'Margen',
+    'calc.roi': 'ROI',
+    'calc.netProfit': 'Beneficio neto',
+    'calc.breakEven': 'Punto de equilibrio',
+    'calc.compareAll': 'Comparar todos los mercados',
+
+    'suppliers.title': 'Proveedores',
+    'suppliers.subtitle': 'Proveedores verificados para sourcing FBA',
+    'suppliers.search': 'Buscar proveedor...',
+    'suppliers.contact': 'Contactar Proveedor',
+    'suppliers.requestSample': 'Pedir Muestra',
+    'suppliers.european': 'Proveedores Europeos',
+
+    'panel.canYouSell': '¿Puedes Venderlo?',
+    'panel.eligible': 'Elegible para venta',
+    'panel.noIpIssues': 'Sin Problemas de PI',
+    'panel.ipRisk': 'Posible Problema de PI',
+    'panel.notHazmat': 'No es Hazmat',
+    'panel.hazmat': 'Hazmat / Mercancías Peligrosas',
+    'panel.notPrivateLabel': 'No es Marca Propia',
+    'panel.privateLabel': 'Marca Propia detectada',
+    'panel.noRestrictions': 'Sin restricciones conocidas',
+    'panel.variations': 'Variaciones disponibles',
+
+    'panel.doesItSell': '¿Se Vende?',
+    'panel.currentBsr': 'BSR Actual',
+    'panel.category': 'Categoría',
+    'panel.bsrAvg30': 'BSR Media 30d',
+    'panel.bsrAvg90': 'BSR Media 90d',
+    'panel.bsrAvg180': 'BSR Media 180d',
+    'panel.estMonthlySales': 'Ventas Mensuales Est.',
+    'panel.units': 'unidades',
+    'panel.fbaSellers': 'Vendedores FBA',
+    'panel.fbmSellers': 'Vendedores FBM',
+    'panel.amazonSelling': '¿Amazon Vende?',
+    'panel.yes': 'SÍ',
+    'panel.no': 'No',
+    'panel.top3Stock': 'Stock Top 3 Competidores',
+    'panel.priceHistory': 'Historial de Precio y BSR (90 días)',
+
+    'panel.isItProfitable': '¿Es Rentable?',
+    'panel.input': 'Entrada',
+    'panel.results': 'Resultados',
+    'panel.costPrice': 'Precio de Coste',
+    'panel.inboundShipping': 'Envío de Entrada',
+    'panel.referral15': 'Referencia (15%)',
+    'panel.breakEvenCost': 'Coste de equilibrio',
+    'panel.maxCost30ROI': 'Coste máx. ROI 30%',
+
+    'panel.competition': 'Competencia',
+    'panel.seller': 'Vendedor',
+    'panel.type': 'Tipo',
+    'panel.stock': 'Stock',
+    'panel.amazonSelling.warning': 'Amazon está vendiendo en este listing',
+
+    'panel.aiRecommendation': 'Recomendación IA',
+    'panel.aiDescription': 'Analiza todos los datos del producto con IA para obtener una recomendación de compra',
+    'panel.getAiAnalysis': 'Obtener Análisis IA',
+    'panel.analyzing': 'Analizando...',
+    'panel.reAnalyze': 'Re-analizar',
+    'panel.buy': 'COMPRAR',
+    'panel.noBuy': 'NO COMPRAR',
+    'panel.confidence': 'confianza',
+    'panel.topReasons': 'Principales Razones',
+    'panel.riskFactors': 'Factores de Riesgo',
+    'panel.suggestedPrice': 'Precio de Entrada Sugerido',
+
+    'btn.save': 'Guardar',
+    'btn.csv': 'CSV',
+    'btn.saveProduct': 'Guardar Producto',
+    'btn.exportCsv': 'Exportar a CSV',
+    'btn.cancel': 'Cancelar',
+
+    'general.loading': 'Cargando...',
+    'general.noResults': 'No se encontraron resultados',
+    'general.productNotFound': 'Producto no encontrado',
+
+    'mock.banner': 'Datos en tiempo real temporalmente no disponibles — mostrando datos de ejemplo',
+
+    'marketplace.DE': 'Alemania',
+    'marketplace.FR': 'Francia',
+    'marketplace.IT': 'Italia',
+    'marketplace.ES': 'España',
+    'marketplace.UK': 'Reino Unido',
+  },
+} as const;
+
+type TranslationKey = keyof typeof translations.en;
+
+function detectLanguage(): Language {
+  const saved = localStorage.getItem('fbaradar-language');
+  if (saved === 'en' || saved === 'pt' || saved === 'es') return saved;
+  const browserLang = navigator.language.slice(0, 2).toLowerCase();
+  if (browserLang === 'pt') return 'pt';
+  if (browserLang === 'es') return 'es';
+  return 'en';
+}
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: TranslationKey) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType>({
+  language: 'en',
+  setLanguage: () => {},
+  t: (key) => key,
+});
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguageState] = useState<Language>(detectLanguage);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('fbaradar-language', lang);
+  };
+
+  const t = (key: TranslationKey): string => {
+    return translations[language][key] || translations.en[key] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  return useContext(LanguageContext);
+}
+
+export const LANGUAGE_OPTIONS: { value: Language; label: string; flag: string }[] = [
+  { value: 'en', label: 'English', flag: '🇬🇧' },
+  { value: 'pt', label: 'Português', flag: '🇵🇹' },
+  { value: 'es', label: 'Español', flag: '🇪🇸' },
+];

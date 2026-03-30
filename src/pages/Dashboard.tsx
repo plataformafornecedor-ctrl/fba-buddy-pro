@@ -2,17 +2,11 @@ import { BarChart3, TrendingUp, Bell, Bookmark, Search, Calculator, Truck, Brain
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/lib/i18n';
 
 interface DashboardProps {
   onNavigate: (tab: 'finder' | 'calculator' | 'suppliers') => void;
 }
-
-const METRICS = [
-  { label: 'Products Analyzed', value: '147', icon: BarChart3, trend: '+12 this week' },
-  { label: 'Avg Margin %', value: '34.2%', icon: TrendingUp, trend: '+2.1% vs last week' },
-  { label: 'Active Alerts', value: '5', icon: Bell, trend: '2 new today' },
-  { label: 'Saved Products', value: '23', icon: Bookmark, trend: '3 added recently' },
-];
 
 const RECENT_SEARCHES = [
   { keyword: 'silicone kitchen utensils', results: 42, time: '2 min ago' },
@@ -23,14 +17,22 @@ const RECENT_SEARCHES = [
 ];
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
+  const { t } = useLanguage();
+
+  const METRICS = [
+    { label: t('dashboard.productsAnalyzed'), value: '147', icon: BarChart3, trend: t('dashboard.thisWeek') },
+    { label: t('dashboard.avgMargin'), value: '34.2%', icon: TrendingUp, trend: t('dashboard.vsLastWeek') },
+    { label: t('dashboard.activeAlerts'), value: '5', icon: Bell, trend: t('dashboard.newToday') },
+    { label: t('dashboard.savedProducts'), value: '23', icon: Bookmark, trend: t('dashboard.addedRecently') },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Your FBA research overview</p>
+        <h1 className="text-2xl font-display font-bold">{t('dashboard.title')}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t('dashboard.subtitle')}</p>
       </div>
 
-      {/* Metric cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {METRICS.map((m) => (
           <Card key={m.label} className="border-border/50">
@@ -47,10 +49,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
-        {/* Recent searches */}
         <Card className="lg:col-span-2 border-border/50">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Recent Searches</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.recentSearches')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {RECENT_SEARCHES.map((s) => (
@@ -60,7 +61,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   <span className="text-sm font-medium">{s.keyword}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="text-xs">{s.results} results</Badge>
+                  <Badge variant="secondary" className="text-xs">{s.results} {t('dashboard.results')}</Badge>
                   <span className="text-xs text-muted-foreground">{s.time}</span>
                 </div>
               </div>
@@ -68,34 +69,32 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Quick actions */}
         <div className="space-y-4">
           <Card className="border-border/50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Quick Actions</CardTitle>
+              <CardTitle className="text-base">{t('dashboard.quickActions')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Button className="w-full justify-start gap-2" variant="secondary" onClick={() => onNavigate('finder')}>
-                <Search className="w-4 h-4" /> Search Product
+                <Search className="w-4 h-4" /> {t('dashboard.searchProduct')}
               </Button>
               <Button className="w-full justify-start gap-2" variant="secondary" onClick={() => onNavigate('calculator')}>
-                <Calculator className="w-4 h-4" /> Open Calculator
+                <Calculator className="w-4 h-4" /> {t('dashboard.openCalculator')}
               </Button>
               <Button className="w-full justify-start gap-2" variant="secondary" onClick={() => onNavigate('suppliers')}>
-                <Truck className="w-4 h-4" /> View Suppliers
+                <Truck className="w-4 h-4" /> {t('dashboard.viewSuppliers')}
               </Button>
             </CardContent>
           </Card>
 
-          {/* AI Insight */}
           <Card className="border-primary/30 bg-primary/5">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Brain className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">AI Insight</span>
+                <span className="text-sm font-semibold text-primary">{t('dashboard.aiInsight')}</span>
               </div>
               <p className="text-sm text-foreground/80 leading-relaxed">
-                Today's tip: Products with BSR under 20,000 and under 150 reviews represent the best opportunities for new FBA sellers entering the European market.
+                {t('dashboard.aiTip')}
               </p>
             </CardContent>
           </Card>

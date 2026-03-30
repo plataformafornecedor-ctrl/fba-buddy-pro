@@ -1,6 +1,7 @@
-import { Star, MapPin, Clock, Package, DollarSign } from 'lucide-react';
+import { Star, Clock, Package, DollarSign } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/lib/i18n';
 
 const SUPPLIERS = [
   { name: 'EuroLogix GmbH', country: 'Germany', flag: '🇩🇪', moq: 500, leadTime: '7-10 days', pricePerUnit: '€2.40', rating: 4.8, tags: ['Kitchenware', 'Homeware', 'Fast Shipping'] },
@@ -25,11 +26,13 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Suppliers() {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold">Suppliers</h1>
-        <p className="text-muted-foreground text-sm mt-1">Verified suppliers for FBA sourcing</p>
+        <h1 className="text-2xl font-display font-bold">{t('suppliers.title')}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t('suppliers.subtitle')}</p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
