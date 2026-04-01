@@ -195,6 +195,16 @@ const translations = {
     'marketplace.IT': 'Italy',
     'marketplace.ES': 'Spain',
     'marketplace.UK': 'United Kingdom',
+
+    // Auth
+    'auth.signIn': 'Sign In',
+    'auth.signUp': 'Sign Up',
+    'auth.signInTitle': 'Sign in to your account',
+    'auth.createAccount': 'Create your account',
+    'auth.name': 'Name',
+    'auth.password': 'Password',
+    'auth.haveAccount': 'Already have an account? Sign in',
+    'auth.noAccount': "Don't have an account? Sign up",
   },
   pt: {
     'nav.dashboard': 'Painel',
@@ -372,6 +382,15 @@ const translations = {
     'marketplace.IT': 'Itália',
     'marketplace.ES': 'Espanha',
     'marketplace.UK': 'Reino Unido',
+
+    'auth.signIn': 'Entrar',
+    'auth.signUp': 'Criar Conta',
+    'auth.signInTitle': 'Entra na tua conta',
+    'auth.createAccount': 'Cria a tua conta',
+    'auth.name': 'Nome',
+    'auth.password': 'Palavra-passe',
+    'auth.haveAccount': 'Já tens conta? Entra',
+    'auth.noAccount': 'Não tens conta? Cria uma',
   },
   es: {
     'nav.dashboard': 'Panel',
@@ -549,6 +568,15 @@ const translations = {
     'marketplace.IT': 'Italia',
     'marketplace.ES': 'España',
     'marketplace.UK': 'Reino Unido',
+
+    'auth.signIn': 'Iniciar Sesión',
+    'auth.signUp': 'Registrarse',
+    'auth.signInTitle': 'Inicia sesión en tu cuenta',
+    'auth.createAccount': 'Crea tu cuenta',
+    'auth.name': 'Nombre',
+    'auth.password': 'Contraseña',
+    'auth.haveAccount': '¿Ya tienes cuenta? Inicia sesión',
+    'auth.noAccount': '¿No tienes cuenta? Regístrate',
   },
 } as const;
 
