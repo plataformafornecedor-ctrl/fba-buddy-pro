@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useLanguage, LANGUAGE_OPTIONS } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type Tab = 'dashboard' | 'finder' | 'calculator' | 'suppliers';
+type Tab = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal';
 
 interface AppLayoutProps {
   activeTab: Tab;
