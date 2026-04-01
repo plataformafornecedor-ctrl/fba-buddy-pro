@@ -382,6 +382,15 @@ const translations = {
     'marketplace.IT': 'Itália',
     'marketplace.ES': 'Espanha',
     'marketplace.UK': 'Reino Unido',
+
+    'auth.signIn': 'Entrar',
+    'auth.signUp': 'Criar Conta',
+    'auth.signInTitle': 'Entra na tua conta',
+    'auth.createAccount': 'Cria a tua conta',
+    'auth.name': 'Nome',
+    'auth.password': 'Palavra-passe',
+    'auth.haveAccount': 'Já tens conta? Entra',
+    'auth.noAccount': 'Não tens conta? Cria uma',
   },
   es: {
     'nav.dashboard': 'Panel',
