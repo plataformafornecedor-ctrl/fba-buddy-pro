@@ -18,6 +18,7 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
 
   const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'dailydeal', label: t('nav.dailyDeal'), icon: <Target className="w-4 h-4" /> },
     { id: 'finder', label: t('nav.finder'), icon: <Search className="w-4 h-4" /> },
     { id: 'calculator', label: t('nav.calculator'), icon: <Calculator className="w-4 h-4" /> },
     { id: 'suppliers', label: t('nav.suppliers'), icon: <Truck className="w-4 h-4" /> },
