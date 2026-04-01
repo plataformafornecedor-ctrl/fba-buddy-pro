@@ -5,12 +5,13 @@ import ProductFinder from '@/components/ProductFinder';
 import ProductDetailView from '@/components/ProductDetailView';
 import MarginCalculator from '@/components/MarginCalculator';
 import Suppliers from '@/pages/Suppliers';
+import DailyDeal from '@/pages/DailyDeal';
 import { Marketplace } from '@/lib/types';
 
-type View = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'detail';
+type View = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'detail' | 'dailydeal';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'finder' | 'calculator' | 'suppliers'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal'>('dashboard');
   const [view, setView] = useState<View>('dashboard');
   const [selectedAsin, setSelectedAsin] = useState('');
   const [selectedMarketplace, setSelectedMarketplace] = useState<Marketplace>('DE');
@@ -18,7 +19,7 @@ const Index = () => {
     price: number; fbaFee: number; weight: number | null; category: string; feeSource: 'real' | 'estimated';
   } | undefined>();
 
-  const handleTabChange = (tab: 'dashboard' | 'finder' | 'calculator' | 'suppliers') => {
+  const handleTabChange = (tab: 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal') => {
     setActiveTab(tab);
     setView(tab);
   };
@@ -38,6 +39,7 @@ const Index = () => {
   return (
     <AppLayout activeTab={activeTab} onTabChange={handleTabChange}>
       {view === 'dashboard' && <Dashboard onNavigate={handleTabChange} />}
+      {view === 'dailydeal' && <DailyDeal onAnalyze={handleAnalyze} />}
       {view === 'finder' && <ProductFinder onAnalyze={handleAnalyze} />}
       {view === 'detail' && (
         <ProductDetailView
