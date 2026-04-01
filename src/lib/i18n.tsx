@@ -195,6 +195,16 @@ const translations = {
     'marketplace.IT': 'Italy',
     'marketplace.ES': 'Spain',
     'marketplace.UK': 'United Kingdom',
+
+    // Auth
+    'auth.signIn': 'Sign In',
+    'auth.signUp': 'Sign Up',
+    'auth.signInTitle': 'Sign in to your account',
+    'auth.createAccount': 'Create your account',
+    'auth.name': 'Name',
+    'auth.password': 'Password',
+    'auth.haveAccount': 'Already have an account? Sign in',
+    'auth.noAccount': "Don't have an account? Sign up",
   },
   pt: {
     'nav.dashboard': 'Painel',
