@@ -103,8 +103,8 @@ export default function AdminUserDetail() {
               {isSuperAdmin && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Role</label>
-                  <Select value={role} onValueChange={async (v) => {
-                    await supabase.from('user_roles').update({ role: v }).eq('user_id', id);
+                  <Select value={role} onValueChange={async (v: string) => {
+                    await supabase.from('user_roles').update({ role: v as any }).eq('user_id', id);
                     setRole(v);
                     toast.success('Role updated');
                   }}>

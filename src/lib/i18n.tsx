@@ -568,6 +568,15 @@ const translations = {
     'marketplace.IT': 'Italia',
     'marketplace.ES': 'España',
     'marketplace.UK': 'Reino Unido',
+
+    'auth.signIn': 'Iniciar Sesión',
+    'auth.signUp': 'Registrarse',
+    'auth.signInTitle': 'Inicia sesión en tu cuenta',
+    'auth.createAccount': 'Crea tu cuenta',
+    'auth.name': 'Nombre',
+    'auth.password': 'Contraseña',
+    'auth.haveAccount': '¿Ya tienes cuenta? Inicia sesión',
+    'auth.noAccount': '¿No tienes cuenta? Regístrate',
   },
 } as const;
 
