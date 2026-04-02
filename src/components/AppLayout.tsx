@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LayoutDashboard, Search, Calculator, Truck, Menu, X, TrendingUp, Radar, Target } from 'lucide-react';
+import { getDataSource } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useLanguage, LANGUAGE_OPTIONS } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,6 +16,23 @@ interface AppLayoutProps {
 export default function AppLayout({ activeTab, onTabChange, children }: AppLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t, language, setLanguage } = useLanguage();
+
+  function DataSourceBadge() {
+    const [source, setSource] = useState(getDataSource());
+    useEffect(() => {
+      const interval = setInterval(() => setSource(getDataSource()), 2000);
+      return () => clearInterval(interval);
+    }, []);
+    const isLive = source === 'live';
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : 'bg-yellow-500'}`} />
+        <span className="text-xs text-muted-foreground hidden sm:inline">
+          {isLive ? `🟢 ${t('nav.liveData')}` : '🟡 Demo Data'}
+        </span>
+      </div>
+    );
+  }
 
   const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -52,10 +70,7 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-accent" />
-            <span className="text-xs text-muted-foreground hidden sm:inline">{t('nav.liveData')}</span>
-          </div>
+          <DataSourceBadge />
           <Select value={language} onValueChange={(v) => setLanguage(v as any)}>
             <SelectTrigger className="w-auto h-8 gap-1.5 text-xs px-2 border-border/50">
               <SelectValue>
