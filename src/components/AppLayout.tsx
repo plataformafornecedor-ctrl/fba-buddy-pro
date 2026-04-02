@@ -53,10 +53,7 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-accent" />
-            <span className="text-xs text-muted-foreground hidden sm:inline">{t('nav.liveData')}</span>
-          </div>
+          <DataSourceBadge />
           <Select value={language} onValueChange={(v) => setLanguage(v as any)}>
             <SelectTrigger className="w-auto h-8 gap-1.5 text-xs px-2 border-border/50">
               <SelectValue>
