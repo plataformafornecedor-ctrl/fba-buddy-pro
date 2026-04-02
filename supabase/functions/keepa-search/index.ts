@@ -27,11 +27,13 @@ serve(async (req) => {
     }
 
     const url = `https://api.keepa.com/search?key=${apiKey}&domain=${domain}&type=product&term=${encodeURIComponent(keyword)}&perPage=20`;
+    console.log('Keepa search URL:', url.replace(apiKey, 'REDACTED'));
     const response = await fetch(url);
     const data = await response.json();
+    console.log('Keepa response status:', response.status, 'keys:', Object.keys(data), 'error:', data.error);
 
     if (!response.ok || !data.products) {
-      return new Response(JSON.stringify({ error: data.error || 'Keepa API error' }), {
+      return new Response(JSON.stringify({ error: data.error || 'Keepa API error', details: JSON.stringify(data).slice(0, 500) }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
