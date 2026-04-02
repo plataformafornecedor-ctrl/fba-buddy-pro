@@ -17,6 +17,23 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
   const [mobileOpen, setMobileOpen] = useState(false);
   const { t, language, setLanguage } = useLanguage();
 
+  function DataSourceBadge() {
+    const [source, setSource] = useState(getDataSource());
+    useEffect(() => {
+      const interval = setInterval(() => setSource(getDataSource()), 2000);
+      return () => clearInterval(interval);
+    }, []);
+    const isLive = source === 'live';
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : 'bg-yellow-500'}`} />
+        <span className="text-xs text-muted-foreground hidden sm:inline">
+          {isLive ? `🟢 ${t('nav.liveData')}` : '🟡 Demo Data'}
+        </span>
+      </div>
+    );
+  }
+
   const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: t('nav.dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
     { id: 'dailydeal', label: t('nav.dailyDeal'), icon: <Target className="w-4 h-4" /> },
