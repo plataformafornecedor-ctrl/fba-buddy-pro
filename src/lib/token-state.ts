@@ -1,6 +1,3 @@
-import { create } from 'zustand';
-// We'll use a simple global store pattern instead of zustand since it's not installed
-
 // Token state management
 interface TokenState {
   tokensLeft: number | null;
