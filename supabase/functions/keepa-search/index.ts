@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { keyword, domain } = await req.json();
+    const { keyword, domain, perPage } = await req.json();
     
     if (!keyword || !domain) {
       return new Response(JSON.stringify({ error: 'Missing keyword or domain' }), {
@@ -26,33 +26,52 @@ serve(async (req) => {
       });
     }
 
-    const url = `https://api.keepa.com/search?key=${apiKey}&domain=${domain}&type=product&term=${encodeURIComponent(keyword)}&perPage=20`;
+    const limit = Math.min(perPage || 10, 20);
+    // Lightweight search: stats=0, history=0, offers=0 to minimize token usage
+    const url = `https://api.keepa.com/search?key=${apiKey}&domain=${domain}&type=product&term=${encodeURIComponent(keyword)}&perPage=${limit}&stats=0&history=0&offers=0`;
     console.log('Keepa search URL:', url.replace(apiKey, 'REDACTED'));
     const response = await fetch(url);
     const data = await response.json();
-    console.log('Keepa response status:', response.status, 'keys:', Object.keys(data), 'error:', data.error);
+    
+    const tokensLeft = data.tokensLeft ?? null;
+    const refillIn = data.refillIn ?? null;
+    console.log(`Keepa response: status=${response.status}, tokensLeft=${tokensLeft}, refillIn=${refillIn}min`);
 
     if (!response.ok || !data.products) {
-      return new Response(JSON.stringify({ error: data.error || 'Keepa API error', details: JSON.stringify(data).slice(0, 500) }), {
+      return new Response(JSON.stringify({ 
+        error: data.error || 'Keepa API error', 
+        tokensLeft,
+        refillIn,
+      }), {
         status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const products = data.products.map((p: any) => ({
-      asin: p.asin,
-      title: p.title,
-      currentPrice: p.stats?.current?.[0] != null ? p.stats.current[0] / 100 : null,
-      fbaPrice: p.stats?.current?.[3] != null ? p.stats.current[3] / 100 : null,
-      bsr: p.salesRanks?.[0]?.[p.salesRanks[0].length - 1] ?? null,
-      reviewCount: p.stats?.current?.[11] ?? null,
-      priceHistory: p.csv?.[3]?.filter((_: any, i: number) => i % 2 === 1).slice(-20) || [],
-      bsrHistory: [],
-      category: p.categoryTree?.[0]?.name || 'Unknown',
-      imageUrl: p.imagesCSV ? `https://images-na.ssl-images-amazon.com/images/I/${p.imagesCSV.split(',')[0]}` : '',
-      isAmazonSeller: p.stats?.current?.[3] != null && p.stats.current[3] > 0,
-    }));
+    const products = data.products.map((p: any) => {
+      // Extract current BSR from salesRanks
+      let bsr: number | null = null;
+      if (p.salesRanks) {
+        const mainCat = Object.keys(p.salesRanks)[0];
+        if (mainCat && p.salesRanks[mainCat]?.length >= 2) {
+          const ranks = p.salesRanks[mainCat];
+          bsr = ranks[ranks.length - 1];
+        }
+      }
 
-    return new Response(JSON.stringify({ products }), {
+      return {
+        asin: p.asin,
+        title: p.title,
+        currentPrice: p.stats?.current?.[0] != null ? p.stats.current[0] / 100 : null,
+        fbaPrice: p.stats?.current?.[3] != null ? p.stats.current[3] / 100 : null,
+        bsr,
+        reviewCount: p.stats?.current?.[11] ?? null,
+        category: p.categoryTree?.[0]?.name || 'Unknown',
+        imageUrl: p.imagesCSV ? `https://images-na.ssl-images-amazon.com/images/I/${p.imagesCSV.split(',')[0]}` : '',
+        isAmazonSeller: p.stats?.current?.[3] != null && p.stats.current[3] > 0,
+      };
+    });
+
+    return new Response(JSON.stringify({ products, tokensLeft, refillIn }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
