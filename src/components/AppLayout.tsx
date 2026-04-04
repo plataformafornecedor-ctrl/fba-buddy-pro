@@ -71,6 +71,7 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
+          <TokenMonitor />
           <DataSourceBadge />
           <Select value={language} onValueChange={(v) => setLanguage(v as any)}>
             <SelectTrigger className="w-auto h-8 gap-1.5 text-xs px-2 border-border/50">

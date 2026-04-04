@@ -74,6 +74,11 @@ export default function ProductFinder({ onAnalyze }: ProductFinderProps) {
       </div>
 
       {data?.isMock && <MockDataBanner />}
+      {data && !data.isMock && data.isCached && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg px-3 py-1.5 w-fit">
+          <span>🕐</span> Cached data
+        </div>
+      )}
 
       {isLoading ? (
         <ProductTableSkeleton />
