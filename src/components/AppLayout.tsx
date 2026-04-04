@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Search, Calculator, Truck, Menu, X, TrendingUp, Radar, Target } from 'lucide-react';
 import { getDataSource } from '@/lib/api';
+import { TokenMonitor } from '@/components/TokenMonitor';
 import { cn } from '@/lib/utils';
 import { useLanguage, LANGUAGE_OPTIONS } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -24,11 +25,12 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
       return () => clearInterval(interval);
     }, []);
     const isLive = source === 'live';
+    const isCached = source === 'cached';
     return (
       <div className="flex items-center gap-1.5">
-        <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : 'bg-yellow-500'}`} />
+        <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : isCached ? 'bg-blue-500' : 'bg-yellow-500'}`} />
         <span className="text-xs text-muted-foreground hidden sm:inline">
-          {isLive ? `🟢 ${t('nav.liveData')}` : '🟡 Demo Data'}
+          {isLive ? `🟢 ${t('nav.liveData')}` : isCached ? '🔵 Cached' : '🟡 Demo Data'}
         </span>
       </div>
     );
@@ -70,6 +72,7 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3">
+          <TokenMonitor />
           <DataSourceBadge />
           <Select value={language} onValueChange={(v) => setLanguage(v as any)}>
             <SelectTrigger className="w-auto h-8 gap-1.5 text-xs px-2 border-border/50">

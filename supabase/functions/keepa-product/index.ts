@@ -26,20 +26,25 @@ serve(async (req) => {
       });
     }
 
-    const url = `https://api.keepa.com/product?key=${apiKey}&domain=${domain}&asin=${asin}&history=1&days=90`;
+    // Optimized: stats=180 (last 180 days), offers=10 (max 10 offers), history=1
+    const url = `https://api.keepa.com/product?key=${apiKey}&domain=${domain}&asin=${asin}&history=1&stats=180&offers=10&days=90`;
+    console.log('Keepa product URL:', url.replace(apiKey, 'REDACTED'));
     const response = await fetch(url);
     const data = await response.json();
 
+    const tokensLeft = data.tokensLeft ?? null;
+    const refillIn = data.refillIn ?? null;
+    console.log(`Keepa product: status=${response.status}, tokensLeft=${tokensLeft}, refillIn=${refillIn}min`);
+
     if (!response.ok || !data.products?.[0]) {
-      return new Response(JSON.stringify({ error: 'Product not found' }), {
+      return new Response(JSON.stringify({ error: 'Product not found', tokensLeft, refillIn }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const p = data.products[0];
-    const keepaEpoch = 21564000; // minutes since keepa epoch to unix epoch conversion
+    const keepaEpoch = 21564000;
 
-    // Parse price history (csv[3] = new price, format: [time, price, time, price, ...])
     const priceHistory: number[] = [];
     const priceHistoryDates: string[] = [];
     if (p.csv?.[3]) {
@@ -54,10 +59,8 @@ serve(async (req) => {
       }
     }
 
-    // Parse BSR history
     const bsrHistory: number[] = [];
     const bsrHistoryDates: string[] = [];
-    const salesRankData = p.csv?.[3] ? null : null; // salesRanks format varies
     if (p.salesRanks) {
       const mainCategory = Object.keys(p.salesRanks)[0];
       if (mainCategory && p.salesRanks[mainCategory]) {
@@ -73,10 +76,6 @@ serve(async (req) => {
         }
       }
     }
-
-    // Try to get Amazon fees if credentials are available
-    let realFbaFee: number | null = null;
-    let feeSource: 'real' | 'estimated' = 'estimated';
 
     const product = {
       asin: p.asin,
@@ -95,11 +94,11 @@ serve(async (req) => {
       sellerCount: p.stats?.current?.[10] ?? null,
       weight: p.packageWeight != null ? p.packageWeight / 1000 : null,
       dimensions: p.packageLength ? `${p.packageLength/10} x ${p.packageWidth/10} x ${p.packageHeight/10} cm` : null,
-      realFbaFee,
-      feeSource,
+      realFbaFee: null,
+      feeSource: 'estimated' as const,
     };
 
-    return new Response(JSON.stringify({ product }), {
+    return new Response(JSON.stringify({ product, tokensLeft, refillIn }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
