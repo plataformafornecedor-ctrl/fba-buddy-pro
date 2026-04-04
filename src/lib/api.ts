@@ -1,8 +1,11 @@
 import { KeepaProduct, ProductDetail, Marketplace, MARKETPLACE_CONFIG, calculateOpportunityScore } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { getCached, setCache } from './keepa-cache';
+import { enqueueApiCall } from './rate-limiter';
+import { updateTokenState, shouldUseMockData } from './token-state';
 
 // Track data source for UI indicator
-let lastDataSource: 'live' | 'mock' = 'mock';
+let lastDataSource: 'live' | 'mock' | 'cached' = 'mock';
 export function getDataSource() { return lastDataSource; }
 
 // Rich realistic mock data
@@ -70,15 +73,56 @@ function enrichProducts(products: KeepaProduct[]): KeepaProduct[] {
     .sort((a, b) => b.opportunityScore - a.opportunityScore);
 }
 
-export async function searchProducts(keyword: string, marketplace: Marketplace): Promise<{ products: KeepaProduct[]; isMock: boolean }> {
+export async function fetchTokenStatus(): Promise<{ tokensLeft: number; refillIn: number }> {
+  try {
+    const { data, error } = await supabase.functions.invoke('keepa-tokens', { body: {} });
+    if (error) throw error;
+    const tokensLeft = data?.tokensLeft ?? 0;
+    const refillIn = data?.refillIn ?? 0;
+    updateTokenState(tokensLeft, refillIn);
+    return { tokensLeft, refillIn };
+  } catch {
+    return { tokensLeft: 0, refillIn: 0 };
+  }
+}
+
+function handleTokenUpdate(data: any) {
+  if (data?.tokensLeft != null) {
+    updateTokenState(data.tokensLeft, data.refillIn ?? null);
+  }
+}
+
+export async function searchProducts(
+  keyword: string, 
+  marketplace: Marketplace, 
+  perPage = 10
+): Promise<{ products: KeepaProduct[]; isMock: boolean; isCached: boolean }> {
+  // Check cache first
+  const cached = getCached<KeepaProduct[]>('search', keyword, marketplace);
+  if (cached) {
+    lastDataSource = 'cached';
+    return { products: enrichProducts(cached.data), isMock: false, isCached: true };
+  }
+
+  // Check if tokens are too low
+  if (shouldUseMockData()) {
+    lastDataSource = 'mock';
+    return { ...getMockSearchResults(keyword), isCached: false };
+  }
+
   const config = MARKETPLACE_CONFIG[marketplace];
 
   try {
-    const { data, error } = await supabase.functions.invoke('keepa-search', {
-      body: { keyword, domain: config.domain },
+    const data = await enqueueApiCall(async () => {
+      const { data, error } = await supabase.functions.invoke('keepa-search', {
+        body: { keyword, domain: config.domain, perPage },
+      });
+      if (error) throw error;
+      return data;
     });
 
-    if (error) throw error;
+    handleTokenUpdate(data);
+
     if (!data?.products?.length) throw new Error('No products returned');
 
     const products: KeepaProduct[] = data.products.map((p: any) => ({
@@ -88,43 +132,65 @@ export async function searchProducts(keyword: string, marketplace: Marketplace):
       fbaPrice: p.fbaPrice,
       bsr: p.bsr,
       reviewCount: p.reviewCount,
-      priceHistory: p.priceHistory || [],
-      bsrHistory: p.bsrHistory || [],
+      priceHistory: [],
+      bsrHistory: [],
       category: p.category || 'Unknown',
       imageUrl: p.imageUrl || '',
       isAmazonSeller: p.isAmazonSeller || false,
       opportunityScore: 0,
     }));
 
+    const enriched = enrichProducts(products);
+    setCache('search', keyword, marketplace, enriched);
     lastDataSource = 'live';
-    return { products: enrichProducts(products), isMock: false };
+    return { products: enriched, isMock: false, isCached: false };
   } catch (err) {
     console.warn('Keepa search failed, using mock data:', err);
     lastDataSource = 'mock';
-
-    const kw = keyword.toLowerCase();
-    const filtered = MOCK_PRODUCTS.filter(p =>
-      p.title.toLowerCase().includes(kw) ||
-      p.category.toLowerCase().includes(kw) ||
-      kw.length < 3
-    );
-
-    return {
-      products: enrichProducts(filtered.length ? filtered : MOCK_PRODUCTS),
-      isMock: true,
-    };
+    return { ...getMockSearchResults(keyword), isCached: false };
   }
 }
 
-export async function getProductDetail(asin: string, marketplace: Marketplace): Promise<{ product: ProductDetail; isMock: boolean }> {
+function getMockSearchResults(keyword: string): { products: KeepaProduct[]; isMock: boolean } {
+  const kw = keyword.toLowerCase();
+  const filtered = MOCK_PRODUCTS.filter(p =>
+    p.title.toLowerCase().includes(kw) ||
+    p.category.toLowerCase().includes(kw) ||
+    kw.length < 3
+  );
+  return {
+    products: enrichProducts(filtered.length ? filtered : MOCK_PRODUCTS),
+    isMock: true,
+  };
+}
+
+export async function getProductDetail(asin: string, marketplace: Marketplace): Promise<{ product: ProductDetail; isMock: boolean; isCached: boolean }> {
+  // Check cache first
+  const cached = getCached<ProductDetail>('product', asin, marketplace);
+  if (cached) {
+    lastDataSource = 'cached';
+    return { product: cached.data, isMock: false, isCached: true };
+  }
+
+  // Check if tokens are too low
+  if (shouldUseMockData()) {
+    lastDataSource = 'mock';
+    return { ...getMockProductDetail(asin), isCached: false };
+  }
+
   const config = MARKETPLACE_CONFIG[marketplace];
 
   try {
-    const { data, error } = await supabase.functions.invoke('keepa-product', {
-      body: { asin, domain: config.domain, marketplaceId: config.marketplaceId },
+    const data = await enqueueApiCall(async () => {
+      const { data, error } = await supabase.functions.invoke('keepa-product', {
+        body: { asin, domain: config.domain, marketplaceId: config.marketplaceId },
+      });
+      if (error) throw error;
+      return data;
     });
 
-    if (error) throw error;
+    handleTokenUpdate(data);
+
     if (!data?.product) throw new Error('No product returned');
 
     const p = data.product;
@@ -183,12 +249,13 @@ export async function getProductDetail(asin: string, marketplace: Marketplace): 
       eligibility,
     };
 
+    setCache('product', asin, marketplace, detail);
     lastDataSource = 'live';
-    return { product: detail, isMock: false };
+    return { product: detail, isMock: false, isCached: false };
   } catch (err) {
     console.warn('Keepa product detail failed, using mock data:', err);
     lastDataSource = 'mock';
-    return getMockProductDetail(asin);
+    return { ...getMockProductDetail(asin), isCached: false };
   }
 }
 
