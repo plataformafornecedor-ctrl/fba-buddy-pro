@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LayoutDashboard, Search, Calculator, Truck, Menu, X, TrendingUp, Radar, Target } from 'lucide-react';
 import { getDataSource } from '@/lib/api';
+import { TokenMonitor } from '@/components/TokenMonitor';
 import { cn } from '@/lib/utils';
 import { useLanguage, LANGUAGE_OPTIONS } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
