@@ -25,11 +25,12 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
       return () => clearInterval(interval);
     }, []);
     const isLive = source === 'live';
+    const isCached = source === 'cached';
     return (
       <div className="flex items-center gap-1.5">
-        <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : 'bg-yellow-500'}`} />
+        <span className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : isCached ? 'bg-blue-500' : 'bg-yellow-500'}`} />
         <span className="text-xs text-muted-foreground hidden sm:inline">
-          {isLive ? `🟢 ${t('nav.liveData')}` : '🟡 Demo Data'}
+          {isLive ? `🟢 ${t('nav.liveData')}` : isCached ? '🔵 Cached' : '🟡 Demo Data'}
         </span>
       </div>
     );
