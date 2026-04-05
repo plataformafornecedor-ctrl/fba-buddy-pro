@@ -65,18 +65,28 @@ export default function ProductDetailView({ asin, marketplace, onBack, onOpenCal
   const [calcMarketplace, setCalcMarketplace] = useState<Marketplace>(marketplace);
   const [fulfillment, setFulfillment] = useState<'FBA' | 'FBM'>('FBA');
 
+  const [realFee, setRealFee] = useState<{ fbaFee: number; source: 'real' | 'estimated' } | null>(null);
+
+  useEffect(() => {
+    if (product && product.currentPrice) {
+      getAmazonFees(product.asin, product.currentPrice, marketplace).then(setRealFee);
+    }
+  }, [product?.asin, product?.currentPrice, marketplace]);
+
   const [aiResult, setAiResult] = useState<null | {
     recommendation: string; confidence: number; reasons: string[]; risks: string[]; suggestedPrice: number;
   }>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
   if (isLoading) return <DetailSkeleton />;
-  const product = data?.product;
-  if (!product) return <div className="text-center py-12 text-muted-foreground">{t('general.productNotFound')}</div>;
+  const product2 = data?.product;
+  if (!product2) return <div className="text-center py-12 text-muted-foreground">{t('general.productNotFound')}</div>;
 
   const calcCfg = MARKETPLACE_CONFIG[calcMarketplace];
-  const sellingPrice = product.currentPrice || 0;
-  const fbaFee = product.realFbaFee || sellingPrice * 0.12 + 1.5;
+  const sellingPrice = product2.currentPrice || 0;
+  const feeData = realFee || { fbaFee: product2.realFbaFee || sellingPrice * 0.12 + 1.5, source: product2.feeSource || 'estimated' as const };
+  const fbaFee = feeData.fbaFee;
+  const feeSource = feeData.source;
   const referralFee = sellingPrice * 0.15;
   const vat = sellingPrice * calcCfg.vatRate;
   const totalCosts = costPrice + inboundShipping + (fulfillment === 'FBA' ? fbaFee : 0) + referralFee + vat;
