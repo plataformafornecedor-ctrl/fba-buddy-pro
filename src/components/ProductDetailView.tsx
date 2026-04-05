@@ -79,8 +79,8 @@ export default function ProductDetailView({ asin, marketplace, onBack, onOpenCal
   const [aiLoading, setAiLoading] = useState(false);
 
   if (isLoading) return <DetailSkeleton />;
-  const product2 = data?.product;
-  if (!product2) return <div className="text-center py-12 text-muted-foreground">{t('general.productNotFound')}</div>;
+  const product = data?.product;
+  if (!product) return <div className="text-center py-12 text-muted-foreground">{t('general.productNotFound')}</div>;
 
   const calcCfg = MARKETPLACE_CONFIG[calcMarketplace];
   const sellingPrice = product2.currentPrice || 0;
