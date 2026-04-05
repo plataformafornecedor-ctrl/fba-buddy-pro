@@ -6,8 +6,8 @@ interface CacheEntry<T> {
   ttl: number;
 }
 
-const SEARCH_TTL = 6 * 60 * 60 * 1000; // 6 hours
-const PRODUCT_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const SEARCH_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const PRODUCT_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
 function getCacheKey(type: 'search' | 'product', id: string, marketplace: string): string {
   return `keepa_${type}_${id.toLowerCase().trim()}_${marketplace}`;
@@ -39,7 +39,6 @@ export function setCache<T>(type: 'search' | 'product', id: string, marketplace:
     };
     localStorage.setItem(key, JSON.stringify(entry));
   } catch {
-    // localStorage full, clear old keepa entries
     clearOldCache();
   }
 }
@@ -47,7 +46,6 @@ export function setCache<T>(type: 'search' | 'product', id: string, marketplace:
 function clearOldCache() {
   try {
     const keys = Object.keys(localStorage).filter(k => k.startsWith('keepa_'));
-    // Remove oldest half
     const entries = keys.map(k => {
       try {
         const raw = localStorage.getItem(k);

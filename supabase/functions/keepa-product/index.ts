@@ -26,8 +26,8 @@ serve(async (req) => {
       });
     }
 
-    // Optimized: stats=180 (last 180 days), offers=10 (max 10 offers), history=1
-    const url = `https://api.keepa.com/product?key=${apiKey}&domain=${domain}&asin=${asin}&history=1&stats=180&offers=10&days=90`;
+    // Optimized: stats=90, history=1, offers=0, update=0
+    const url = `https://api.keepa.com/product?key=${apiKey}&domain=${domain}&asin=${asin}&history=1&stats=90&offers=0&update=0&days=90`;
     console.log('Keepa product URL:', url.replace(apiKey, 'REDACTED'));
     const response = await fetch(url);
     const data = await response.json();
