@@ -243,7 +243,14 @@ export default function ProductDetailView({ asin, marketplace, onBack, onOpenCal
             </div>
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('panel.results')}</p>
-              <StatRow label={t('calc.fbaFee')} value={`${calcCfg.currency}${fbaFee.toFixed(2)}`} />
+              <StatRow label={t('calc.fbaFee')} value={
+                <span className="flex items-center gap-1.5">
+                  {calcCfg.currency}{fbaFee.toFixed(2)}
+                  {feeSource === 'real'
+                    ? <span className="flex items-center gap-0.5 text-[10px] text-success"><CheckCircle2 className="w-3 h-3" /> Real</span>
+                    : <span className="flex items-center gap-0.5 text-[10px] text-warning"><AlertTriangle className="w-3 h-3" /> Est.</span>}
+                </span>
+              } />
               <StatRow label={t('panel.referral15')} value={`${calcCfg.currency}${referralFee.toFixed(2)}`} />
               <StatRow label={`VAT (${(calcCfg.vatRate * 100).toFixed(0)}%)`} value={`${calcCfg.currency}${vat.toFixed(2)}`} />
               <div className="border-t border-border pt-2 mt-1">
