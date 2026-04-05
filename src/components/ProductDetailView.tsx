@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft, CheckCircle2, AlertTriangle, XCircle, Package, BarChart3,
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Marketplace, MARKETPLACE_CONFIG, getScoreClass } from '@/lib/types';
-import { getProductDetail } from '@/lib/api';
+import { getProductDetail, getAmazonFees } from '@/lib/api';
 import { DetailSkeleton } from '@/components/Skeletons';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -65,18 +65,29 @@ export default function ProductDetailView({ asin, marketplace, onBack, onOpenCal
   const [calcMarketplace, setCalcMarketplace] = useState<Marketplace>(marketplace);
   const [fulfillment, setFulfillment] = useState<'FBA' | 'FBM'>('FBA');
 
+  const [realFee, setRealFee] = useState<{ fbaFee: number; source: 'real' | 'estimated' } | null>(null);
+
   const [aiResult, setAiResult] = useState<null | {
     recommendation: string; confidence: number; reasons: string[]; risks: string[]; suggestedPrice: number;
   }>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  if (isLoading) return <DetailSkeleton />;
   const product = data?.product;
+
+  useEffect(() => {
+    if (product && product.currentPrice) {
+      getAmazonFees(product.asin, product.currentPrice, marketplace).then(setRealFee);
+    }
+  }, [product?.asin, product?.currentPrice, marketplace]);
+
+  if (isLoading) return <DetailSkeleton />;
   if (!product) return <div className="text-center py-12 text-muted-foreground">{t('general.productNotFound')}</div>;
 
   const calcCfg = MARKETPLACE_CONFIG[calcMarketplace];
   const sellingPrice = product.currentPrice || 0;
-  const fbaFee = product.realFbaFee || sellingPrice * 0.12 + 1.5;
+  const feeData = realFee || { fbaFee: product.realFbaFee || sellingPrice * 0.12 + 1.5, source: product.feeSource || 'estimated' as const };
+  const fbaFee = feeData.fbaFee;
+  const feeSource = feeData.source;
   const referralFee = sellingPrice * 0.15;
   const vat = sellingPrice * calcCfg.vatRate;
   const totalCosts = costPrice + inboundShipping + (fulfillment === 'FBA' ? fbaFee : 0) + referralFee + vat;
@@ -232,7 +243,14 @@ export default function ProductDetailView({ asin, marketplace, onBack, onOpenCal
             </div>
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('panel.results')}</p>
-              <StatRow label={t('calc.fbaFee')} value={`${calcCfg.currency}${fbaFee.toFixed(2)}`} />
+              <StatRow label={t('calc.fbaFee')} value={
+                <span className="flex items-center gap-1.5">
+                  {calcCfg.currency}{fbaFee.toFixed(2)}
+                  {feeSource === 'real'
+                    ? <span className="flex items-center gap-0.5 text-[10px] text-success"><CheckCircle2 className="w-3 h-3" /> Real</span>
+                    : <span className="flex items-center gap-0.5 text-[10px] text-warning"><AlertTriangle className="w-3 h-3" /> Est.</span>}
+                </span>
+              } />
               <StatRow label={t('panel.referral15')} value={`${calcCfg.currency}${referralFee.toFixed(2)}`} />
               <StatRow label={`VAT (${(calcCfg.vatRate * 100).toFixed(0)}%)`} value={`${calcCfg.currency}${vat.toFixed(2)}`} />
               <div className="border-t border-border pt-2 mt-1">
