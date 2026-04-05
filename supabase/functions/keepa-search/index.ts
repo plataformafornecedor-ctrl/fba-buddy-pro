@@ -26,9 +26,9 @@ serve(async (req) => {
       });
     }
 
-    const limit = Math.min(perPage || 10, 20);
-    // Lightweight search: stats=0, history=0, offers=0 to minimize token usage
-    const url = `https://api.keepa.com/search?key=${apiKey}&domain=${domain}&type=product&term=${encodeURIComponent(keyword)}&perPage=${limit}&stats=0&history=0&offers=0`;
+    const limit = Math.min(perPage || 10, 10);
+    // ULTRA LIGHTWEIGHT: no stats, no history, no offers — ~3 tokens per search
+    const url = `https://api.keepa.com/search?key=${apiKey}&domain=${domain}&type=product&term=${encodeURIComponent(keyword)}&page=0&perPage=${limit}`;
     console.log('Keepa search URL:', url.replace(apiKey, 'REDACTED'));
     const response = await fetch(url);
     const data = await response.json();

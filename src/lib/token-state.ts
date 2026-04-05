@@ -25,5 +25,5 @@ export function onTokenStateChange(listener: (s: TokenState) => void) {
 }
 
 export function shouldUseMockData(): boolean {
-  return state.tokensLeft !== null && state.tokensLeft < 20;
+  return state.tokensLeft !== null && state.tokensLeft < 50;
 }
