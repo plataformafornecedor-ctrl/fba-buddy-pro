@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Marketplace, MARKETPLACE_CONFIG, getScoreClass } from '@/lib/types';
-import { getProductDetail } from '@/lib/api';
+import { getProductDetail, getAmazonFees } from '@/lib/api';
 import { DetailSkeleton } from '@/components/Skeletons';
 import PriceHistoryChart from '@/components/PriceHistoryChart';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';

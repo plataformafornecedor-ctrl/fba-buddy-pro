@@ -322,6 +322,19 @@ function getMockProductDetail(asin: string): { product: ProductDetail; isMock: b
   return { product: detail, isMock: true };
 }
 
-export async function getAmazonFees(_asin: string, price: number, _marketplace: Marketplace): Promise<{ fbaFee: number; source: 'real' | 'estimated' }> {
-  return { fbaFee: Math.round((price * 0.12 + 1.5) * 100) / 100, source: 'estimated' };
+export async function getAmazonFees(asin: string, price: number, marketplace: Marketplace): Promise<{ fbaFee: number; source: 'real' | 'estimated' }> {
+  const config = MARKETPLACE_CONFIG[marketplace];
+  try {
+    const { data, error } = await supabase.functions.invoke('amazon-fees', {
+      body: { asin, price, marketplaceId: config.marketplaceId },
+    });
+    if (error) throw error;
+    if (data?.fbaFee != null) {
+      return { fbaFee: data.fbaFee, source: 'real' };
+    }
+    throw new Error('No fee returned');
+  } catch (err) {
+    console.warn('Amazon SP-API fee fetch failed, using estimate:', err);
+    return { fbaFee: Math.round((price * 0.12 + 1.5) * 100) / 100, source: 'estimated' };
+  }
 }
