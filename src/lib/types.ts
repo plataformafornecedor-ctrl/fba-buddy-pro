@@ -73,13 +73,70 @@ export const MARKETPLACE_CONFIG: Record<Marketplace, { domain: number; vatRate: 
   UK: { domain: 2, vatRate: 0.20, currency: '£', label: 'United Kingdom', marketplaceId: 'A1F83G8C2ARO7P' },
 };
 
+/** Clean product title: remove dimensions, truncate to 60 chars */
+export function cleanTitle(title: string): string {
+  let cleaned = title
+    .replace(/\b\d{1,4}\s*[xX×]\s*\d{1,4}(\s*[xX×]\s*\d{1,4})?\s*(cm|mm|m|inch|in|zoll)?\b/gi, '')
+    .replace(/\b\d{1,4}\s*(cm|mm|m|inch|in|zoll)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  if (cleaned.length > 60) {
+    cleaned = cleaned.substring(0, 57) + '…';
+  }
+  return cleaned;
+}
+
+/** Detect if title is likely German */
+export function isGermanTitle(title: string): boolean {
+  const germanWords = /\b(für|mit|und|aus|oder|nicht|Küche|Stück|Edelstahl|Silikon|Haushalt|Zubehör|Geschenk|Klein|Groß)\b/i;
+  return germanWords.test(title);
+}
+
+/** Filter out bad products */
+export function filterValidProducts(products: KeepaProduct[]): KeepaProduct[] {
+  return products.filter(p => {
+    if (!p.asin) return false;
+    if (!p.title || p.title.length < 10) return false;
+    if (p.currentPrice != null && p.currentPrice <= 0) return false;
+    return true;
+  });
+}
+
+const KITCHEN_CATEGORIES = ['kitchen', 'küche', 'cocina', 'cucina', 'cuisine'];
+
 export function calculateOpportunityScore(product: Partial<KeepaProduct>): number {
   let score = 0;
-  if (product.bsr != null && product.bsr < 50000) score += 30;
-  if (product.reviewCount != null && product.reviewCount < 200) score += 25;
-  if (product.currentPrice != null && product.currentPrice >= 15 && product.currentPrice <= 60) score += 20;
-  if (!product.isAmazonSeller) score += 25;
-  return score;
+
+  // BSR: +30 if has BSR data and < 50000
+  if (product.bsr != null && product.bsr > 0) {
+    score += product.bsr < 50000 ? 30 : 15;
+  }
+  // No BSR = +0
+
+  // Reviews
+  if (product.reviewCount != null) {
+    if (product.reviewCount < 300) score += 25;
+    else if (product.reviewCount < 1000) score += 10;
+  } else {
+    score += 10; // unknown = neutral
+  }
+
+  // Price range
+  if (product.currentPrice != null) {
+    if (product.currentPrice >= 15 && product.currentPrice <= 60) score += 20;
+    else score += 10;
+  }
+
+  // Category not kitchen-dominated
+  const cat = (product.category || '').toLowerCase();
+  const isKitchen = KITCHEN_CATEGORIES.some(k => cat.includes(k));
+  if (!isKitchen) score += 25;
+  else score += 5;
+
+  // Amazon not selling
+  if (!product.isAmazonSeller) score += 0; // removed from score to allow variation
+
+  return Math.min(score, 100);
 }
 
 export function getScoreClass(score: number): string {
