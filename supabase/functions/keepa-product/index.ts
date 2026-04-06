@@ -26,19 +26,20 @@ serve(async (req) => {
       });
     }
 
-    // Optimized: stats=90, history=1, offers=0, update=0
-    const url = `https://api.keepa.com/product?key=${apiKey}&domain=${domain}&asin=${asin}&history=1&stats=90&offers=0&update=0&days=90`;
+    // Optimized: stats=90, history=1, offers=0, update=0, rating=0
+    const url = `https://api.keepa.com/product?key=${apiKey}&domain=${domain}&asin=${asin}&history=1&stats=90&offers=0&update=0&days=90&rating=0`;
     console.log('Keepa product URL:', url.replace(apiKey, 'REDACTED'));
     const response = await fetch(url);
     const data = await response.json();
 
     const tokensLeft = data.tokensLeft ?? null;
     const refillIn = data.refillIn ?? null;
-    console.log(`Keepa product: status=${response.status}, tokensLeft=${tokensLeft}, refillIn=${refillIn}min`);
+    console.log(`Keepa product: status=${response.status}, tokensLeft=${tokensLeft}, refillIn=${refillIn}min, products=${data.products?.length ?? 0}`);
 
-    if (!response.ok || !data.products?.[0]) {
-      return new Response(JSON.stringify({ error: 'Product not found', tokensLeft, refillIn }), {
-        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (!data.products?.[0]) {
+      // Return 200 with null product so client can fallback gracefully
+      return new Response(JSON.stringify({ product: null, tokensLeft, refillIn, error: 'Product not found in Keepa database' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
