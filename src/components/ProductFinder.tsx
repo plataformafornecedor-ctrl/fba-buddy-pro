@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Marketplace, MARKETPLACE_CONFIG } from '@/lib/types';
+import { Marketplace, MARKETPLACE_CONFIG, filterValidProducts, calculateOpportunityScore } from '@/lib/types';
 import { searchProducts } from '@/lib/api';
 import ProductRow from '@/components/ProductRow';
 import { ProductTableSkeleton } from '@/components/Skeletons';
@@ -84,15 +84,25 @@ export default function ProductFinder({ onAnalyze }: ProductFinderProps) {
         <ProductTableSkeleton />
       ) : data?.products ? (
         <div className="space-y-3">
-          <div className="text-sm text-muted-foreground">{data.products.length} {t('finder.productsFound')}</div>
-          {data.products.map(product => (
-            <ProductRow
-              key={product.asin}
-              product={product}
-              marketplace={marketplace}
-              onAnalyze={(asin) => onAnalyze(asin, marketplace)}
-            />
-          ))}
+          {(() => {
+            const filtered = filterValidProducts(data.products).map(p => ({
+              ...p,
+              opportunityScore: calculateOpportunityScore(p),
+            }));
+            return (
+              <>
+                <div className="text-sm text-muted-foreground">{filtered.length} {t('finder.productsFound')}</div>
+                {filtered.map(product => (
+                  <ProductRow
+                    key={product.asin}
+                    product={product}
+                    marketplace={marketplace}
+                    onAnalyze={(asin) => onAnalyze(asin, marketplace)}
+                  />
+                ))}
+              </>
+            );
+          })()}
         </div>
       ) : searchTrigger ? (
         <div className="text-center py-12 text-muted-foreground">{t('finder.noResults')}</div>
