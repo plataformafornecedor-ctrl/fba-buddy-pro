@@ -47,6 +47,57 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_listings: {
+        Row: {
+          backend_keywords: string | null
+          bullets: Json | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          input_data: Json | null
+          language: string
+          marketplace: string
+          product_name: string
+          seo_score: Json | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backend_keywords?: string | null
+          bullets?: Json | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          input_data?: Json | null
+          language?: string
+          marketplace?: string
+          product_name: string
+          seo_score?: Json | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backend_keywords?: string | null
+          bullets?: Json | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          input_data?: Json | null
+          language?: string
+          marketplace?: string
+          product_name?: string
+          seo_score?: Json | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
