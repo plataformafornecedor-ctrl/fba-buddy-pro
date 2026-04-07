@@ -164,6 +164,63 @@ function getMockSearchResults(keyword: string): { products: KeepaProduct[]; isMo
   };
 }
 
+export async function searchByCategory(
+  categoryId: number,
+  marketplace: Marketplace
+): Promise<{ products: KeepaProduct[]; isMock: boolean; isCached: boolean }> {
+  const cacheKey = `cat_${categoryId}`;
+  const cached = getCached<KeepaProduct[]>('search', cacheKey, marketplace);
+  if (cached) {
+    lastDataSource = 'cached';
+    return { products: enrichProducts(cached.data), isMock: false, isCached: true };
+  }
+
+  if (shouldUseMockData()) {
+    lastDataSource = 'mock';
+    return { products: enrichProducts(MOCK_PRODUCTS), isMock: true, isCached: false };
+  }
+
+  const config = MARKETPLACE_CONFIG[marketplace];
+
+  try {
+    const data = await enqueueApiCall(async () => {
+      const { data, error } = await supabase.functions.invoke('keepa-query', {
+        body: { categoryId, domain: config.domain },
+      });
+      if (error) throw error;
+      return data;
+    });
+
+    handleTokenUpdate(data);
+
+    if (!data?.products?.length) throw new Error('No products returned');
+
+    const products: KeepaProduct[] = data.products.map((p: any) => ({
+      asin: p.asin,
+      title: p.title || 'Unknown Product',
+      currentPrice: p.currentPrice,
+      fbaPrice: p.fbaPrice,
+      bsr: p.bsr,
+      reviewCount: p.reviewCount,
+      priceHistory: [],
+      bsrHistory: [],
+      category: p.category || 'Unknown',
+      imageUrl: p.imageUrl || '',
+      isAmazonSeller: p.isAmazonSeller || false,
+      opportunityScore: 0,
+    }));
+
+    const enriched = enrichProducts(products);
+    setCache('search', cacheKey, marketplace, enriched);
+    lastDataSource = 'live';
+    return { products: enriched, isMock: false, isCached: false };
+  } catch (err) {
+    console.warn('Keepa category query failed, using mock data:', err);
+    lastDataSource = 'mock';
+    return { products: enrichProducts(MOCK_PRODUCTS), isMock: true, isCached: false };
+  }
+}
+
 export async function getProductDetail(asin: string, marketplace: Marketplace): Promise<{ product: ProductDetail; isMock: boolean; isCached: boolean }> {
   // Check cache first
   const cached = getCached<ProductDetail>('product', asin, marketplace);
