@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useLanguage, LANGUAGE_OPTIONS } from '@/lib/i18n';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type Tab = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal';
+type Tab = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal' | 'listing';
 
 interface AppLayoutProps {
   activeTab: Tab;
@@ -42,6 +42,7 @@ export default function AppLayout({ activeTab, onTabChange, children }: AppLayou
     { id: 'finder', label: t('nav.finder'), icon: <Search className="w-4 h-4" /> },
     { id: 'calculator', label: t('nav.calculator'), icon: <Calculator className="w-4 h-4" /> },
     { id: 'suppliers', label: t('nav.suppliers'), icon: <Truck className="w-4 h-4" /> },
+    { id: 'listing', label: '✍️ Criar Listing', icon: <Sparkles className="w-4 h-4" /> },
   ];
 
   return (
