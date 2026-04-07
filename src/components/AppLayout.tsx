@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Search, Calculator, Truck, Menu, X, TrendingUp, Radar, Target } from 'lucide-react';
+import { LayoutDashboard, Search, Calculator, Truck, Menu, X, TrendingUp, Radar, Target, Sparkles } from 'lucide-react';
 import { getDataSource } from '@/lib/api';
 import { TokenMonitor } from '@/components/TokenMonitor';
 import { cn } from '@/lib/utils';
