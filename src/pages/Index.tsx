@@ -6,12 +6,14 @@ import ProductDetailView from '@/components/ProductDetailView';
 import MarginCalculator from '@/components/MarginCalculator';
 import Suppliers from '@/pages/Suppliers';
 import DailyDeal from '@/pages/DailyDeal';
+import ListingBuilder from '@/pages/ListingBuilder';
+import SavedListings from '@/components/listing-builder/SavedListings';
 import { Marketplace } from '@/lib/types';
 
-type View = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'detail' | 'dailydeal';
+type View = 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'detail' | 'dailydeal' | 'listing' | 'saved-listings';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal' | 'listing'>('dashboard');
   const [view, setView] = useState<View>('dashboard');
   const [selectedAsin, setSelectedAsin] = useState('');
   const [selectedMarketplace, setSelectedMarketplace] = useState<Marketplace>('DE');
@@ -19,7 +21,7 @@ const Index = () => {
     price: number; fbaFee: number; weight: number | null; category: string; feeSource: 'real' | 'estimated';
   } | undefined>();
 
-  const handleTabChange = (tab: 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal') => {
+  const handleTabChange = (tab: 'dashboard' | 'finder' | 'calculator' | 'suppliers' | 'dailydeal' | 'listing') => {
     setActiveTab(tab);
     setView(tab);
   };
@@ -51,6 +53,8 @@ const Index = () => {
       )}
       {view === 'calculator' && <MarginCalculator prefill={calculatorPrefill} />}
       {view === 'suppliers' && <Suppliers />}
+      {view === 'listing' && <ListingBuilder />}
+      {view === 'saved-listings' && <SavedListings onBack={() => { setView('listing'); setActiveTab('listing'); }} />}
     </AppLayout>
   );
 };
