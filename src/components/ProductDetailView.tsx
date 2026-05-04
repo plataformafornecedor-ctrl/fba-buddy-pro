@@ -17,6 +17,9 @@ import PriceHistoryChart from '@/components/PriceHistoryChart';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/i18n';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 interface ProductDetailViewProps {
   asin: string;
@@ -52,6 +55,8 @@ function StatRow({ label, value, accent }: { label: string; value: React.ReactNo
 
 export default function ProductDetailView({ asin, marketplace, onBack, onOpenCalculator }: ProductDetailViewProps) {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [saving, setSaving] = useState(false);
   const currency = MARKETPLACE_CONFIG[marketplace].currency;
   const cfg = MARKETPLACE_CONFIG[marketplace];
 
@@ -145,7 +150,18 @@ export default function ProductDetailView({ asin, marketplace, onBack, onOpenCal
         <div className={`score-badge text-sm px-3 py-1 ${getScoreClass(product.opportunityScore)}`}>
           {product.opportunityScore}/100
         </div>
-        <Button variant="outline" size="sm" onClick={() => {}}><Save className="w-3.5 h-3.5 mr-1" />{t('btn.save')}</Button>
+        <Button variant="outline" size="sm" disabled={saving} onClick={async () => {
+          if (!user) { toast.error('Tens de estar autenticado'); return; }
+          setSaving(true);
+          const { error } = await supabase.from('saved_products').upsert({
+            user_id: user.id, asin: product.asin, marketplace,
+            title: product.title, category: product.category,
+            current_price: product.currentPrice, bsr: product.bsr,
+            opportunity_score: product.opportunityScore,
+          }, { onConflict: 'user_id,asin,marketplace' });
+          setSaving(false);
+          if (error) toast.error('Erro ao guardar'); else toast.success('Produto guardado!');
+        }}><Save className="w-3.5 h-3.5 mr-1" />{saving ? '...' : t('btn.save')}</Button>
         <Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="w-3.5 h-3.5 mr-1" />{t('btn.csv')}</Button>
       </div>
 

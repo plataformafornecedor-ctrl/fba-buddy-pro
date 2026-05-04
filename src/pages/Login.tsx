@@ -7,12 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/lib/i18n';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Login() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const isSignUp = mode === 'signup';
+  const isForgot = mode === 'forgot';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -24,6 +28,17 @@ export default function Login() {
     setError('');
     setLoading(true);
 
+    if (isForgot) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setLoading(false);
+      if (error) { setError(error.message); return; }
+      toast.success('Verifica o teu email para o link de recuperação.');
+      setMode('signin');
+      return;
+    }
+
     if (isSignUp) {
       const { error } = await signUp(email, password, name);
       if (error) { setError(error); setLoading(false); return; }
@@ -32,7 +47,6 @@ export default function Login() {
       if (error) { setError(error); setLoading(false); return; }
     }
     setLoading(false);
-    // Role-based redirect handled by App.tsx
     navigate('/');
   };
 
@@ -67,22 +81,33 @@ export default function Login() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('auth.password')}</Label>
-                <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-              </div>
+              {!isForgot && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t('auth.password')}</Label>
+                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
+                </div>
+              )}
               {error && <p className="text-destructive text-sm">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? t('general.loading') : isSignUp ? t('auth.signUp') : t('auth.signIn')}
+                {loading ? t('general.loading') : isForgot ? 'Enviar link' : isSignUp ? t('auth.signUp') : t('auth.signIn')}
               </Button>
             </form>
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center space-y-2">
+              {!isForgot && (
+                <button
+                  type="button"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors block w-full"
+                  onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setError(''); }}
+                >
+                  {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
+                </button>
+              )}
               <button
                 type="button"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors block w-full"
+                onClick={() => { setMode(isForgot ? 'signin' : 'forgot'); setError(''); }}
               >
-                {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
+                {isForgot ? '← Voltar para login' : 'Esqueci-me da palavra-passe'}
               </button>
             </div>
           </CardContent>

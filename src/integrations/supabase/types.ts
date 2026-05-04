@@ -98,6 +98,48 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_products: {
+        Row: {
+          asin: string
+          bsr: number | null
+          category: string | null
+          created_at: string
+          current_price: number | null
+          id: string
+          marketplace: string
+          notes: string | null
+          opportunity_score: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          asin: string
+          bsr?: number | null
+          category?: string | null
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          marketplace?: string
+          notes?: string | null
+          opportunity_score?: number | null
+          title?: string
+          user_id: string
+        }
+        Update: {
+          asin?: string
+          bsr?: number | null
+          category?: string | null
+          created_at?: string
+          current_price?: number | null
+          id?: string
+          marketplace?: string
+          notes?: string | null
+          opportunity_score?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
