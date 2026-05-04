@@ -7,12 +7,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/lib/i18n';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function Login() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>('signin');
+  const isSignUp = mode === 'signup';
+  const isForgot = mode === 'forgot';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -24,6 +28,17 @@ export default function Login() {
     setError('');
     setLoading(true);
 
+    if (isForgot) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setLoading(false);
+      if (error) { setError(error.message); return; }
+      toast.success('Verifica o teu email para o link de recuperação.');
+      setMode('signin');
+      return;
+    }
+
     if (isSignUp) {
       const { error } = await signUp(email, password, name);
       if (error) { setError(error); setLoading(false); return; }
@@ -32,7 +47,6 @@ export default function Login() {
       if (error) { setError(error); setLoading(false); return; }
     }
     setLoading(false);
-    // Role-based redirect handled by App.tsx
     navigate('/');
   };
 
