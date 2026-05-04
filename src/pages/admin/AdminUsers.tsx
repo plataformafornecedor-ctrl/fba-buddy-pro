@@ -80,9 +80,19 @@ export default function AdminUsers() {
   };
 
   const handleAddUser = async () => {
-    toast.success(`Invitation sent to ${newUser.email}`);
+    if (!newUser.email || !newUser.password || !newUser.name) {
+      toast.error('Preenche nome, email e password');
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke('admin-create-user', { body: newUser });
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || 'Falha ao criar utilizador');
+      return;
+    }
+    toast.success(`Utilizador ${newUser.email} criado`);
     setAddOpen(false);
     setNewUser({ name: '', email: '', password: '', role: 'user', plan: 'free', sendWelcome: true });
+    fetchUsers();
   };
 
   const roleBadgeColor = (role: string) => {
