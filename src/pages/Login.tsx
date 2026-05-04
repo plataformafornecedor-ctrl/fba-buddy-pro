@@ -81,22 +81,33 @@ export default function Login() {
                 <Label htmlFor="email">Email</Label>
                 <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('auth.password')}</Label>
-                <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
-              </div>
+              {!isForgot && (
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t('auth.password')}</Label>
+                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
+                </div>
+              )}
               {error && <p className="text-destructive text-sm">{error}</p>}
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? t('general.loading') : isSignUp ? t('auth.signUp') : t('auth.signIn')}
+                {loading ? t('general.loading') : isForgot ? 'Enviar link' : isSignUp ? t('auth.signUp') : t('auth.signIn')}
               </Button>
             </form>
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center space-y-2">
+              {!isForgot && (
+                <button
+                  type="button"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors block w-full"
+                  onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setError(''); }}
+                >
+                  {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
+                </button>
+              )}
               <button
                 type="button"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors block w-full"
+                onClick={() => { setMode(isForgot ? 'signin' : 'forgot'); setError(''); }}
               >
-                {isSignUp ? t('auth.haveAccount') : t('auth.noAccount')}
+                {isForgot ? '← Voltar para login' : 'Esqueci-me da palavra-passe'}
               </button>
             </div>
           </CardContent>
