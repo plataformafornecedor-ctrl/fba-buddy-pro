@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,16 +30,19 @@ export default function ListingBuilder() {
   const [formData, setFormData] = useState<ListingFormData | null>(null);
   const [userPlan, setUserPlan] = useState<string>('free');
 
+  const { role } = useAuth();
+
   // Check user plan
-  useState(() => {
+  useEffect(() => {
     if (user) {
-      supabase.from('profiles').select('plan').eq('id', user.id).single().then(({ data }) => {
+      supabase.from('profiles').select('plan').eq('id', user.id).maybeSingle().then(({ data }) => {
         if (data?.plan) setUserPlan(data.plan);
       });
     }
-  });
+  }, [user]);
 
-  const isPro = userPlan !== 'free';
+  // Admins always have full access; otherwise free is locked
+  const isPro = role === 'admin' || role === 'super_admin' || (userPlan !== 'free' && userPlan !== '');
 
   const handleGenerate = async (data: ListingFormData) => {
     if (!isPro) {
