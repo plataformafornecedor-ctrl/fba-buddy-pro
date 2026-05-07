@@ -16,6 +16,7 @@ import AdminUsers from "./pages/admin/AdminUsers.tsx";
 import AdminUserDetail from "./pages/admin/AdminUserDetail.tsx";
 import AdminNotifications from "./pages/admin/AdminNotifications.tsx";
 import AdminSettings from "./pages/admin/AdminSettings.tsx";
+import AdminKeepaHealth from "./pages/admin/AdminKeepaHealth.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
                 <Route path="users/:id" element={<AdminUserDetail />} />
                 <Route path="notifications" element={<AdminNotifications />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="keepa-health" element={<AdminKeepaHealth />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
