@@ -44,7 +44,17 @@ serve(async (req) => {
       });
     }
 
-    const accessToken = await getAccessToken();
+    const estimatedFee = +(price * 0.15).toFixed(2);
+
+    let accessToken: string;
+    try {
+      accessToken = await getAccessToken();
+    } catch (e) {
+      console.warn('SP-API token fetch failed:', (e as Error).message);
+      return new Response(JSON.stringify({ fbaFee: estimatedFee, isEstimated: true, reason: 'auth_failed' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const feesBody = {
       FeesEstimateRequest: {
@@ -61,10 +71,7 @@ serve(async (req) => {
       `https://sellingpartnerapi-eu.amazon.com/products/fees/v0/items/${asin}/feesEstimate`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-amz-access-token': accessToken,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-amz-access-token': accessToken },
         body: JSON.stringify(feesBody),
       }
     );
@@ -72,23 +79,23 @@ serve(async (req) => {
     const feesData = await feesResponse.json();
 
     if (!feesResponse.ok) {
-      return new Response(JSON.stringify({ error: 'Amazon Fees API error', details: feesData }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      console.warn('Amazon Fees API error, returning estimate:', JSON.stringify(feesData));
+      return new Response(JSON.stringify({ fbaFee: estimatedFee, isEstimated: true, reason: 'api_error' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     const feeDetail = feesData?.payload?.FeesEstimateResult?.FeesEstimate;
     const totalFee = feeDetail?.TotalFeesEstimate?.Amount ?? null;
-
-    // Extract FBA fulfillment fee specifically
     const fbaFee = feeDetail?.FeeDetailList?.find((f: any) => f.FeeType === 'FBAFees')?.FinalFee?.Amount ?? totalFee;
 
-    return new Response(JSON.stringify({ fbaFee: fbaFee ?? price * 0.15 }), {
+    return new Response(JSON.stringify({ fbaFee: fbaFee ?? estimatedFee, isEstimated: fbaFee == null }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.error('amazon-fees error:', error);
+    return new Response(JSON.stringify({ fbaFee: 0, isEstimated: true, reason: 'exception', error: (error as Error).message }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
