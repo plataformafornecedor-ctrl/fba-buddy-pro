@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Users, BarChart3, Bell, Settings, Shield, Menu, X, ExternalLink } from 'lucide-react';
+import { Users, BarChart3, Bell, Settings, Shield, Menu, X, ExternalLink, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 const NAV = [
   { path: '/admin', label: 'Overview', icon: BarChart3 },
   { path: '/admin/users', label: 'Users', icon: Users },
+  { path: '/admin/keepa-health', label: 'Keepa Health', icon: Activity },
   { path: '/admin/notifications', label: 'Notifications', icon: Bell },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
