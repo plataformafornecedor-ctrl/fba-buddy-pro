@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft, CheckCircle2, AlertTriangle, XCircle, Package, BarChart3,
   DollarSign, Users, ShieldCheck, TrendingUp, Brain, Save, Download,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Info,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
