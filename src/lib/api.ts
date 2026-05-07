@@ -387,11 +387,15 @@ export async function getAmazonFees(asin: string, price: number, marketplace: Ma
     });
     if (error) throw error;
     if (data?.fbaFee != null) {
-      return { fbaFee: data.fbaFee, source: 'real' };
+      const source: 'real' | 'estimated' = data.isEstimated ? 'estimated' : 'real';
+      if (source === 'estimated') {
+        console.info('[amazon-fees] fallback estimated fee used', { asin, marketplace, reason: data.reason });
+      }
+      return { fbaFee: data.fbaFee, source };
     }
     throw new Error('No fee returned');
   } catch (err) {
-    console.warn('Amazon SP-API fee fetch failed, using estimate:', err);
+    console.warn('[amazon-fees] fetch failed, using local estimate:', { asin, marketplace, err });
     return { fbaFee: Math.round((price * 0.12 + 1.5) * 100) / 100, source: 'estimated' };
   }
 }
