@@ -38,12 +38,14 @@ serve(async (req) => {
     console.log(`Keepa response: status=${response.status}, tokensLeft=${tokensLeft}, refillIn=${refillIn}min`);
 
     if (!response.ok || !data.products) {
-      return new Response(JSON.stringify({ 
-        error: data.error || 'Keepa API error', 
+      console.warn('Keepa returned no products, returning empty result', data.error);
+      return new Response(JSON.stringify({
+        products: [],
         tokensLeft,
         refillIn,
+        warning: data.error?.message || 'No products returned',
       }), {
-        status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
