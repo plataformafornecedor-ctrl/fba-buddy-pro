@@ -14,6 +14,129 @@ export type Database = {
   }
   public: {
     Tables: {
+      keepa_daily_stats: {
+        Row: {
+          alert_level: string
+          created_at: string
+          date: string
+          total_cache_hits: number
+          total_real_calls: number
+          total_tokens_consumed: number
+          unique_users: number
+        }
+        Insert: {
+          alert_level?: string
+          created_at?: string
+          date: string
+          total_cache_hits?: number
+          total_real_calls?: number
+          total_tokens_consumed?: number
+          unique_users?: number
+        }
+        Update: {
+          alert_level?: string
+          created_at?: string
+          date?: string
+          total_cache_hits?: number
+          total_real_calls?: number
+          total_tokens_consumed?: number
+          unique_users?: number
+        }
+        Relationships: []
+      }
+      keepa_product_cache: {
+        Row: {
+          access_count: number
+          asin: string
+          bsr_cached_at: string | null
+          bsr_data: Json | null
+          catalog_cached_at: string | null
+          catalog_data: Json | null
+          created_at: string
+          history_cached_at: string | null
+          history_data: Json | null
+          last_accessed_at: string
+          marketplace: string
+          price_cached_at: string | null
+          price_data: Json | null
+          tokens_total_saved: number
+          updated_at: string
+        }
+        Insert: {
+          access_count?: number
+          asin: string
+          bsr_cached_at?: string | null
+          bsr_data?: Json | null
+          catalog_cached_at?: string | null
+          catalog_data?: Json | null
+          created_at?: string
+          history_cached_at?: string | null
+          history_data?: Json | null
+          last_accessed_at?: string
+          marketplace?: string
+          price_cached_at?: string | null
+          price_data?: Json | null
+          tokens_total_saved?: number
+          updated_at?: string
+        }
+        Update: {
+          access_count?: number
+          asin?: string
+          bsr_cached_at?: string | null
+          bsr_data?: Json | null
+          catalog_cached_at?: string | null
+          catalog_data?: Json | null
+          created_at?: string
+          history_cached_at?: string | null
+          history_data?: Json | null
+          last_accessed_at?: string
+          marketplace?: string
+          price_cached_at?: string | null
+          price_data?: Json | null
+          tokens_total_saved?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      keepa_token_usage: {
+        Row: {
+          asin: string
+          cache_hit: boolean
+          cache_layers_hit: string[] | null
+          created_at: string
+          endpoint: string | null
+          id: string
+          marketplace: string
+          response_time_ms: number | null
+          tokens_consumed: number
+          user_id: string | null
+        }
+        Insert: {
+          asin: string
+          cache_hit?: boolean
+          cache_layers_hit?: string[] | null
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          marketplace?: string
+          response_time_ms?: number | null
+          tokens_consumed?: number
+          user_id?: string | null
+        }
+        Update: {
+          asin?: string
+          cache_hit?: boolean
+          cache_layers_hit?: string[] | null
+          created_at?: string
+          endpoint?: string | null
+          id?: string
+          marketplace?: string
+          response_time_ms?: number | null
+          tokens_consumed?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -154,6 +277,42 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_search_quota: {
+        Row: {
+          cache_hits_today: number
+          created_at: string
+          last_daily_reset: string
+          last_weekly_reset: string
+          plan_tier: string
+          searches_this_week: number
+          searches_today: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cache_hits_today?: number
+          created_at?: string
+          last_daily_reset?: string
+          last_weekly_reset?: string
+          plan_tier?: string
+          searches_this_week?: number
+          searches_today?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cache_hits_today?: number
+          created_at?: string
+          last_daily_reset?: string
+          last_weekly_reset?: string
+          plan_tier?: string
+          searches_this_week?: number
+          searches_today?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
