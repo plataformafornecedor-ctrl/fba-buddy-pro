@@ -265,7 +265,20 @@ export default function ProductDetailView({ asin, marketplace, onBack, onOpenCal
                   {calcCfg.currency}{fbaFee.toFixed(2)}
                   {feeSource === 'real'
                     ? <span className="flex items-center gap-0.5 text-[10px] text-success"><CheckCircle2 className="w-3 h-3" /> Real</span>
-                    : <span className="flex items-center gap-0.5 text-[10px] text-warning"><AlertTriangle className="w-3 h-3" /> Est.</span>}
+                    : (
+                      <TooltipProvider delayDuration={150}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="flex items-center gap-0.5 text-[10px] text-warning cursor-help">
+                              <Info className="w-3 h-3" /> Est.
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[220px] text-xs">
+                            Taxa estimada — dados oficiais Amazon em breve
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                 </span>
               } />
               <StatRow label={t('panel.referral15')} value={`${calcCfg.currency}${referralFee.toFixed(2)}`} />
